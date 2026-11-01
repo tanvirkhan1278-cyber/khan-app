@@ -494,6 +494,91 @@ nav button{gap:4px}
   transition:left .28s cubic-bezier(.2,.9,.25,1),transform .15s}
 .fab.drag{transition:none;cursor:grabbing;transform:scale(1.12)}
 .fab .ic{width:25px;height:25px;pointer-events:none}
+
+/* ===== NOTE widget v2: light-gold frosted frame, collapsible, split-slide open ===== */
+.nt{position:relative;padding:9px;border-radius:30px;margin-bottom:14px;overflow:hidden;
+  background:linear-gradient(135deg,rgba(52,52,56,.60),rgba(18,18,20,.78) 50%,rgba(34,34,37,.62));
+  -webkit-backdrop-filter:blur(30px) saturate(1.15);backdrop-filter:blur(30px) saturate(1.15);
+  border:1px solid rgba(255,255,255,.34);
+  box-shadow:0 18px 40px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.30),inset 0 0 22px rgba(255,255,255,.05),inset 0 -2px 10px rgba(0,0,0,.35)}
+.nt::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.07) 46%,transparent 60%)}
+.nt>*{position:relative}
+.nt-hd{display:flex;align-items:center;gap:8px;padding:7px 7px 7px 22px;border-radius:24px;cursor:pointer;user-select:none;-webkit-user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  background:radial-gradient(70% 130% at 34% 140%,rgba(255,170,50,.20),transparent 62%),#0a0a0b;
+  box-shadow:0 0 0 3px rgba(255,255,255,.14),inset 0 2px 10px rgba(0,0,0,.9),0 6px 14px rgba(0,0,0,.35);
+  transition:transform .55s cubic-bezier(.16,1,.3,1),box-shadow .55s}
+.nt.open .nt-hd{transform:translateY(-3px);box-shadow:0 0 0 3px rgba(255,255,255,.14),inset 0 2px 10px rgba(0,0,0,.9),0 12px 20px rgba(0,0,0,.45)}
+.nt-hd b{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;color:#fff;font-size:20px;font-weight:700;letter-spacing:.01em;padding-left:6px}
+.nt-cnt{font-size:11px;font-weight:600;color:#ffcf8a;background:rgba(255,167,51,.16);border:1px solid rgba(255,167,51,.38);border-radius:999px;padding:1px 8px}
+.nt-pen{width:46px;height:46px;flex:none;border-radius:16px;cursor:pointer;padding:0;color:#f1f1f1;display:flex;align-items:center;justify-content:center;
+  border:1px solid rgba(255,255,255,.16);background:linear-gradient(145deg,#6e6d64,#44433d);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 4px 10px rgba(0,0,0,.4);
+  transition:transform .15s cubic-bezier(.2,.9,.25,1),filter .15s}
+.nt-pen:hover{filter:brightness(1.15)}.nt-pen:active{transform:scale(.92)}
+.nt-body{display:grid;grid-template-rows:0fr;margin-top:0;
+  transition:grid-template-rows .55s cubic-bezier(.16,1,.3,1),margin-top .55s cubic-bezier(.16,1,.3,1)}
+.nt.open .nt-body{grid-template-rows:1fr;margin-top:10px}
+.nt-in2{min-height:0;overflow:hidden}
+.nt-slide{transform:translateY(-30px);opacity:0;transition:transform .6s cubic-bezier(.16,1,.3,1),opacity .35s ease}
+.nt.open .nt-slide{transform:none;opacity:1}
+.nt-list{max-height:380px;overflow-y:auto;scrollbar-width:none;overscroll-behavior:contain}
+.nt-list::-webkit-scrollbar{display:none}
+.nt-list>.nt-item:first-child{margin-top:0}
+#nt_slot:not(:empty)+.nt-list>.nt-item:first-child{margin-top:8px}
+.nt-item,.nt-box{border-radius:22px;background:#1d1d1f;border:2px solid rgba(255,255,255,.10);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.nt-item{margin-top:8px;overflow:hidden}
+.nt-box{padding:13px 16px 12px}
+.nt-item.ani,.nt-box.ani{animation:ntIn .55s cubic-bezier(.16,1,.3,1)}
+@keyframes ntIn{from{opacity:0;transform:translateY(-16px) scale(.97)}to{opacity:1;transform:none}}
+.nt-row{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.nt-hh{flex:1;min-width:0}
+.nt-dt{display:flex;align-items:center;gap:7px;font-size:11px;color:#8e8e92}
+.nt-dt i{width:7px;height:7px;border-radius:50%;background:#ffa733;box-shadow:0 0 8px rgba(255,167,51,.7)}
+.nt-ti2{margin-top:3px;color:#f2f2f2;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nt-chip{flex:none;font-size:11px;font-weight:600;color:#ffcf8a;background:rgba(255,167,51,.14);border:1px solid rgba(255,167,51,.3);border-radius:999px;padding:2px 9px}
+.nt-chev{flex:none;color:#8e8e92;display:flex;transition:transform .4s cubic-bezier(.16,1,.3,1)}
+.nt-chev svg.ic{width:18px;height:18px}
+.nt-item.on .nt-chev{transform:rotate(180deg)}
+.nt-more{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s cubic-bezier(.16,1,.3,1)}
+.nt-item.on .nt-more{grid-template-rows:1fr}
+.nt-mi{min-height:0;overflow:hidden}
+.nt-mc{padding:0 14px 12px;transform:translateY(-12px);opacity:0;transition:transform .45s cubic-bezier(.16,1,.3,1),opacity .3s}
+.nt-item.on .nt-mc{transform:none;opacity:1}
+.nt-tx{margin:0 0 10px;color:#a9a9ad;font-size:13.5px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}
+.nt-empty{padding:14px 16px;color:#7d7d82;font-size:13px;line-height:1.7}
+.nt-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.nt-sg{display:flex;gap:2px;padding:2px;border-radius:999px;background:#2a2a2d;border:1px solid rgba(255,255,255,.07)}
+.nt-sg button{border:0;background:transparent;color:#8e8e92;font:inherit;font-size:11.5px;padding:4px 11px;border-radius:999px;cursor:pointer;transition:background .2s,color .2s}
+.nt-sg button.on{background:#ffa733;color:#1a1208;font-weight:600}
+.nt-ti,.nt-lin{display:block;width:100%;border:0;border-radius:0;background:transparent;color:#f3f3f3;caret-color:#ffa733;font:inherit;outline:0;box-shadow:none;
+  -webkit-backdrop-filter:none;backdrop-filter:none}
+.nt-ti{margin:8px 0 2px;padding:8px 0;font-size:16px;font-weight:600;border-bottom:1px solid rgba(255,255,255,.1)}
+.nt-ti:focus{box-shadow:none;border-color:rgba(255,167,51,.55)}
+.nt-lin{padding:4px 0;font-size:16px;min-width:0}
+.nt-lin:focus{box-shadow:none}
+.nt-ti::placeholder,.nt-lin::placeholder,.nt-in::placeholder{color:#6f6f74;font-weight:400}
+.nt-in{display:block;width:100%;min-height:58px;margin:8px 0 8px;padding:0;border:0;outline:0;resize:none;background:transparent;
+  color:#f3f3f3;caret-color:#ffa733;font:inherit;font-size:16px;line-height:1.7;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+.nt-li{display:flex;align-items:center;gap:10px;padding:6px 0}
+.nt-ck{flex:none;width:20px;height:20px;border-radius:50%;border:1.5px solid #6d6d73;position:relative;cursor:pointer;transition:background .2s,border-color .2s}
+.nt-ck.on{background:#ffa733;border-color:#ffa733}
+.nt-ck.on::after{content:"";position:absolute;left:5.5px;top:2px;width:5px;height:9px;border:solid #1d1d1f;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.nt-lt{flex:1;color:#c9c9cd;font-size:14px;line-height:1.5;overflow-wrap:anywhere;transition:color .2s}
+.nt-item .nt-li{cursor:pointer}
+.nt-li.done .nt-lt{text-decoration:line-through;color:#6d6d73}
+.nt-rm{flex:none;border:0;background:transparent;color:#77777c;cursor:pointer;font-size:15px;padding:4px 6px}
+.nt-add{margin:4px 0 8px;border:1px dashed rgba(255,255,255,.2);background:transparent;color:#a9a9ad;border-radius:12px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.nt-act{display:flex;justify-content:flex-end;gap:10px}
+.nt-b{width:42px;height:42px;border-radius:50%;padding:0;cursor:pointer;color:#d9d9dc;display:flex;align-items:center;justify-content:center;
+  border:1px solid rgba(255,255,255,.1);background:linear-gradient(180deg,#2d2d30,#232325);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);transition:transform .15s cubic-bezier(.2,.9,.25,1),filter .15s}
+.nt-b:hover{filter:brightness(1.25)}.nt-b:active{transform:scale(.9)}
+.nt-b.ok{color:#fff}
+.nt-b.sm2{width:34px;height:34px}.nt-b.sm2 svg.ic{width:17px;height:17px}
+.nt-b.dl{color:#ff8a80}
+@media(prefers-reduced-motion:reduce){.nt *{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
@@ -973,7 +1058,7 @@ function home(){
   var h='<div class="card dk"><div class="mut">'+(profit>=0?t('total_profit'):t('total_loss'))+'</div><div class="big">'+(profit<0?'−':'')+fm(Math.abs(profit))+'</div><div class="tiles"><div class="tile"><b>'+fm(sales)+'</b><span>'+t('sales')+'</span></div><div class="tile"><b>'+fm(recv)+'</b><span>'+t('received')+'</span></div><div class="tile"><b>'+fm(due)+'</b><span>'+t('outstanding')+'</span></div></div></div>';
   h+='<div class="g2"><div class="card"><h2>'+t('sales_7days')+'</h2>'+chart7()+'</div><div class="card" style="text-align:center"><h2>'+t('collection')+'</h2>'+ring(pcnt)+'<div class="mut">'+t('share_of_sales')+'</div></div></div>';
   h+='<div class="g3"><div class="card"><div class="mut">'+t('in_stock')+'</div><div class="num">'+nb(made-sold)+' '+t('pcs')+'</div></div><div class="card"><div class="mut">'+t('wages_due')+'</div><div class="num '+(wd>0?'bad':'')+'">'+fm(wd)+'</div></div><div class="card"><div class="mut">'+t('prod_cost')+'</div><div class="num">'+fm(pc)+'</div></div><div class="card"><div class="mut">'+t('other_exp')+'</div><div class="num">'+fm(ex)+'</div></div></div>';
-  h+='<div class="qa"><button class="add" onclick="go(\'sales\')">'+ic('plus')+' '+t('new_sale')+'</button><button class="add" onclick="go(\'prod\')">'+ic('plus')+' '+t('new_prod')+'</button></div><div class="card"><h2>'+t('by_sale_type')+'</h2>';
+  h+='<div class="qa"><button class="add" onclick="go(\'sales\')">'+ic('plus')+' '+t('new_sale')+'</button><button class="add" onclick="go(\'prod\')">'+ic('plus')+' '+t('new_prod')+'</button></div>'+noteWidget()+'<div class="card"><h2>'+t('by_sale_type')+'</h2>';
   
   var types={retail:t('st_retail'),cod:t('st_cod'),custom:t('st_custom')};
   Object.keys(types).forEach(function(k){
@@ -1026,12 +1111,14 @@ function addSale(){
   var total=0, qTotal=0;
   li.forEach(function(i){total+=i.q*i.r; qTotal+=i.q});
   var paid=st==='retail'?total:(st==='custom'?Math.min(n('s_a'),total):0);
-  put('sales',{
+  var rec={
     id:Date.now(), d:$('s_d').value||today(), type:st, name:nm,
     qty:qTotal, rate:total/qTotal, items:li, paid:paid,
     note:st==='custom'?$('s_o').value.trim():''
-  });
+  };
+  put('sales',rec);
   save();
+  if(window.sendToGoogleSheet&&window.formatSaleForSheet){window.sendToGoogleSheet('sale',window.formatSaleForSheet(rec))}
   fx(function(){pg=1;render()});
 }
 function settle(id){
@@ -1226,7 +1313,7 @@ function addProd(){
     msg(t('err_prod'));
     return;
   }
-  put('prod',{
+  var rec={
     id:Date.now(),
     d:$('p_d').value||today(),
     fabrics:fbs,
@@ -1238,8 +1325,10 @@ function addProd(){
     pcs:pcs,
     cuts:cu,
     sews:se
-  });
+  };
+  put('prod',rec);
   save();
+  if(window.sendToGoogleSheet&&window.formatProdForSheet){window.sendToGoogleSheet('prod',window.formatProdForSheet(rec))}
   fx(render);
 }
 
@@ -1270,7 +1359,7 @@ function prod(){
   h+='<div class="sec"><span>'+t('sew_sec')+'</span></div><div class="mut" style="margin-bottom:8px">'+t('sew_hint')+'</div><div id="sel">'+wrow('','','','')+'</div><button class="sm" onclick="addR(\'sel\',\'w\')">'+t('add_sewing')+'</button>';
   
   // Totals & Save
-  h+='<div class="mut" style="margin:16px 0 12px">'+t('cut_pcs')+' <b id="gq">0</b> · '+t('batch_cost')+' <b id="gp">৳0</b></div><button class="btn" onclick="addProd()">'+t('save_prod')+'</button><span class="err" id="err"></span></div>';
+  h+='<div class="mut" style="margin:16px 0 12px">'+t('cut_pcs')+' <b id="gq">0</b> · '+t('batch_cost')+' <b id="gp">৳0</b></div>'+pkBox()+'<button class="btn" onclick="addProd()">'+t('save_prod')+'</button><span class="err" id="err"></span></div>';
   
   // Stats
   var mk=sum(D.prod,function(x){return x.pcs}), sd=sum(D.sales,function(x){return x.qty}), totalKg=sum(D.prod,function(x){return fabKg(x)});
@@ -1296,7 +1385,7 @@ function prod(){
       }).join('')+'</div>';
     }
     
-    h+='<div class="row"><div><b>'+x.d+' · '+nb(x.pcs)+' '+t('pcs')+'</b><div class="mut">'+t('material_sec')+': '+fabStr+' (Total: '+nb(xKg)+' kg) · '+t('per_piece')+': '+nb(x.pcs>0?(xKg*1000/x.pcs):0)+' g</div>'+clrStr+'<div class="mut">'+t('material_sec')+' '+fm(fabCost(x))+' · '+t('extras_lbl')+' '+fm(x.oth)+' · '+t('cut_lbl')+' '+fm(cutPay(x))+' · '+t('sew_lbl')+' '+fm(sewPay(x))+'</div>'+(x.extras&&x.extras.length?'<div class="mut">'+t('extras_lbl')+': '+x.extras.map(function(e){return esc(e.n)+' '+fm(e.a)}).join(', ')+'</div>':'')+ln(t('cut_lbl'),x.cuts||[])+ln(t('sew_lbl'),x.sews||[])+'</div><div class="tr"><div style="text-align:right">'+fm(pcost(x))+'<div class="mut">'+t('per_piece')+' '+fm(x.pcs>0?(pcost(x)/x.pcs):0)+'</div></div><button class="sm" onclick="edit(\'prod\','+x.id+')">'+t('edit')+'</button><button class="sm" onclick="del(\'prod\','+x.id+')">'+t('delete')+'</button></div></div>';
+    h+='<div class="row"><div><b>'+x.d+' · '+nb(x.pcs)+' '+t('pcs')+'</b><div class="mut">'+t('material_sec')+': '+fabStr+' (Total: '+nb(xKg)+' kg) · '+t('per_piece')+': '+nb(x.pcs>0?(xKg*1000/x.pcs):0)+' g</div>'+clrStr+pkLine(x)+'<div class="mut">'+t('material_sec')+' '+fm(fabCost(x))+' · '+t('extras_lbl')+' '+fm(x.oth)+' · '+t('cut_lbl')+' '+fm(cutPay(x))+' · '+t('sew_lbl')+' '+fm(sewPay(x))+'</div>'+(x.extras&&x.extras.length?'<div class="mut">'+t('extras_lbl')+': '+x.extras.map(function(e){return esc(e.n)+' '+fm(e.a)}).join(', ')+'</div>':'')+ln(t('cut_lbl'),x.cuts||[])+ln(t('sew_lbl'),x.sews||[])+'</div><div class="tr"><div style="text-align:right">'+fm(pcost(x))+'<div class="mut">'+t('per_piece')+' '+fm(x.pcs>0?(pcost(x)/x.pcs):0)+'</div></div><button class="sm" onclick="edit(\'prod\','+x.id+')">'+t('edit')+'</button><button class="sm" onclick="del(\'prod\','+x.id+')">'+t('delete')+'</button></div></div>';
   });
   return h+'</div>';
 }
@@ -1422,8 +1511,10 @@ function addExp(){
   if(busy)return;
   var a=n('e_a');
   if(a<=0){msg(t('err_exp'));return}
-  put('exp',{id:Date.now(),d:$('e_d').value||today(),cat:$('e_c').value,amt:a});
+  var rec={id:Date.now(),d:$('e_d').value||today(),cat:$('e_c').value,amt:a};
+  put('exp',rec);
   save();
+  if(window.sendToGoogleSheet&&window.formatExpForSheet){window.sendToGoogleSheet('exp',window.formatExpForSheet(rec))}
   fx(render);
 }
 function exp(){
@@ -1443,6 +1534,192 @@ function render(){
     if(ed.fresh){ed.fresh=false; fillEd();}
     else ed=null;
   }
+}
+
+
+/* ========================================================
+   NOTES (home page widget) + PIECES-PER-KG / COST-PER-PIECE
+   ======================================================== */
+Object.assign(TX.bn,{
+  note_title:'নোট', note_ph:'এখানে নোট লিখুন…', note_empty:'এখনও কোনো নোট নেই। উপরের পেন্সিলে চাপ দিয়ে নতুন নোট লিখুন।',
+  note_saved:'নোট সংরক্ষিত ✓', note_del_q:'নোটটি মুছে ফেলবেন?',
+  pk_title:'কাপড় থেকে পিস ও খরচের হিসাব', pk_ppk:'প্রতি কেজিতে পিস', pk_fpp:'প্রতি পিসে কাপড়ের খরচ', pk_cpp:'প্রতি পিসে মোট খরচ'
+});
+Object.assign(TX.en,{
+  note_title:'Note', note_ph:'Write your note here…', note_empty:'No notes yet. Tap the pencil above to write one.',
+  note_saved:'Note saved ✓', note_del_q:'Delete this note?',
+  pk_title:'Pieces & cost from fabric', pk_ppk:'Pieces per kg', pk_fpp:'Fabric cost per piece', pk_cpp:'Total cost per piece'
+});
+P.pen='M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4';
+P.x='M6 6l12 12M18 6L6 18';
+P.trash='M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13';
+
+/* ---- Notes v2 ---- */
+Object.assign(TX.bn,{note_head_ph:'শিরোনাম (হেডিং)', note_m_text:'টেক্সট', note_m_list:'চেকলিস্ট', note_item_ph:'আইটেম লিখুন', note_add_item:'+ আইটেম', note_untitled:'নোট'});
+Object.assign(TX.en,{note_head_ph:'Heading', note_m_text:'Text', note_m_list:'Checklist', note_item_ph:'Item', note_add_item:'+ Item', note_untitled:'Note'});
+P.chev='M6 9l6 6 6-6';
+var NT={open:false,compose:false,edit:null,mode:'text',exp:{},fresh:0};
+function ntDate(s){
+  var p=(s||today()).split('-'), mn=LANG==='bn'?MN_BN:MN_EN;
+  return ('0'+(+p[2])).slice(-2)+' '+mn[(+p[1])-1];
+}
+function ntNote(id){return (D.notes||[]).filter(function(x){return x.id===id})[0]}
+function ntType(n){return n.type==='list'?'list':'text'}
+function ntHead(n){
+  var h=(n.title||'').trim();
+  if(!h) h=ntType(n)==='list'?((n.items&&n.items[0]&&n.items[0].t)||''):String(n.txt||'').split('\n')[0];
+  return h||t('note_untitled');
+}
+function ntProg(n){var it=n.items||[];return sum(it,function(x){return x.done?1:0})+'/'+it.length}
+function ntLi(it,i,id){
+  return '<div class="nt-li'+(it.done?' done':'')+'" id="ntl_'+id+'_'+i+'" onclick="ntChk('+id+','+i+')"><span class="nt-ck'+(it.done?' on':'')+'"></span><span class="nt-lt">'+esc(it.t)+'</span></div>';
+}
+function ntItem(n){
+  var list=ntType(n)==='list', on=!!NT.exp[n.id];
+  var body=list?(n.items||[]).map(function(it,i){return ntLi(it,i,n.id)}).join('')+'<div style="height:6px"></div>':'<div class="nt-tx">'+esc(n.txt)+'</div>';
+  return '<div class="nt-item'+(on?' on':'')+(NT.fresh===n.id?' ani':'')+'" id="nti_'+n.id+'">'
+   +'<div class="nt-row" onclick="ntExp('+n.id+')"><div class="nt-hh"><div class="nt-dt"><i></i>'+ntDate(n.d)+'</div><div class="nt-ti2">'+esc(ntHead(n))+'</div></div>'
+   +(list?'<span class="nt-chip" id="ntp_'+n.id+'">'+ntProg(n)+'</span>':'')
+   +'<span class="nt-chev">'+ic('chev')+'</span></div>'
+   +'<div class="nt-more"><div class="nt-mi"><div class="nt-mc">'+body
+   +'<div class="nt-act"><button class="nt-b sm2" aria-label="Edit" onclick="ntEdit('+n.id+')">'+ic('pen')+'</button><button class="nt-b sm2 dl" aria-label="Delete" onclick="ntDel('+n.id+')">'+ic('trash')+'</button></div>'
+   +'</div></div></div></div>';
+}
+function ntListHtml(){
+  var L=(D.notes||[]).filter(function(x){return !(NT.compose&&NT.edit===x.id)});
+  if(!L.length) return NT.compose?'':'<div class="nt-item"><div class="nt-empty">'+t('note_empty')+'</div></div>';
+  return L.map(ntItem).join('');
+}
+function ntLiEd(it){
+  return '<div class="nt-li"><span class="nt-ck'+(it.done?' on':'')+'" onclick="this.classList.toggle(\'on\')"></span><input class="nt-lin" placeholder="'+t('note_item_ph')+'" value="'+esc(it.t)+'" onkeydown="ntKey(event,this)"><button class="nt-rm" aria-label="Remove" onclick="ntRmRow(this)">✕</button></div>';
+}
+function ntCompHtml(dr,anim){
+  var m=dr.mode;
+  var h='<div class="nt-box'+(anim?' ani':'')+'" id="nt_box"><div class="nt-top"><div class="nt-dt"><i></i>'+ntDate(dr.d)+'</div>'
+   +'<div class="nt-sg"><button class="'+(m==='text'?'on':'')+'" onclick="ntMode(\'text\')">'+t('note_m_text')+'</button><button class="'+(m==='list'?'on':'')+'" onclick="ntMode(\'list\')">'+t('note_m_list')+'</button></div></div>'
+   +'<input id="nt_t" class="nt-ti" placeholder="'+t('note_head_ph')+'" value="'+esc(dr.title)+'">';
+  if(m==='text') h+='<textarea id="nt_in" class="nt-in" rows="3" placeholder="'+t('note_ph')+'" oninput="ntGrow(this)">'+esc(dr.txt)+'</textarea>';
+  else h+='<div id="nt_li">'+(dr.items.length?dr.items:[{t:'',done:false}]).map(ntLiEd).join('')+'</div><button class="nt-add" onclick="ntAddRow()">'+t('note_add_item')+'</button>';
+  return h+'<div class="nt-act"><button class="nt-b ok" aria-label="Save" onclick="ntSave()">'+ic('chk')+'</button><button class="nt-b" aria-label="Cancel" onclick="ntCancel()">'+ic('x')+'</button></div></div>';
+}
+function noteWidget(){
+  D.notes=D.notes||[]; NT.compose=false; NT.edit=null; NT.fresh=0;
+  var c=D.notes.length;
+  return '<div id="ntw"><div class="nt'+(NT.open?' open':'')+'" id="nt_f">'
+   +'<div class="nt-hd" onclick="ntTog()"><b>'+t('note_title')+'<span class="nt-cnt" id="nt_cnt" style="'+(c?'':'display:none')+'">'+c+'</span></b>'
+   +'<button class="nt-pen" aria-label="New note" onclick="event.stopPropagation();ntNew()">'+ic('pen')+'</button></div>'
+   +'<div class="nt-body"><div class="nt-in2"><div class="nt-slide"><div id="nt_slot"></div><div class="nt-list" id="nt_list">'+ntListHtml()+'</div></div></div></div>'
+   +'</div></div>';
+}
+function ntList(){
+  var l=$('nt_list'); if(l) l.innerHTML=ntListHtml();
+  var c=$('nt_cnt'), k=(D.notes||[]).length; if(c){c.textContent=k;c.style.display=k?'':'none'}
+}
+function ntSetOpen(v){NT.open=v; var f=$('nt_f'); if(f) f.classList.toggle('open',v)}
+function ntTog(){sfx(NT.open?'close':'open'); ntSetOpen(!NT.open)}
+function ntGrow(el){el.style.height='auto';el.style.height=Math.max(58,el.scrollHeight)+'px'}
+function ntCompose(n){
+  NT.compose=true; NT.edit=n?n.id:null; NT.mode=n?ntType(n):'text';
+  var dr={title:n?(n.title||''):'',txt:n?(n.txt||''):'',items:n?JSON.parse(JSON.stringify(n.items||[])):[],mode:NT.mode,d:n?n.d:today()};
+  var was=NT.open; ntSetOpen(true); sfx('open');
+  $('nt_slot').innerHTML=ntCompHtml(dr,true); ntList();
+  setTimeout(function(){var i=$('nt_t'); if(i) i.focus({preventScroll:true}); var a=$('nt_in'); if(a&&a.value) ntGrow(a)},was?60:280);
+}
+function ntNew(){ if(NT.compose&&!NT.edit){ntCancel();return} ntCompose(null) }
+function ntEdit(id){var n=ntNote(id); if(n) ntCompose(n)}
+function ntCancel(){NT.compose=false;NT.edit=null;sfx('close');$('nt_slot').innerHTML='';ntList()}
+function ntRead(){
+  var ti=$('nt_t'), ta=$('nt_in'), items=[];
+  document.querySelectorAll('#nt_li .nt-li').forEach(function(r){
+    var v=r.querySelector('.nt-lin').value.trim();
+    if(v) items.push({t:v,done:r.querySelector('.nt-ck').classList.contains('on')});
+  });
+  return {title:ti?ti.value.trim():'',txt:ta?ta.value.replace(/\s+$/,''):'',items:items,mode:NT.mode};
+}
+function ntMode(m){
+  if(NT.mode===m) return;
+  sfx('tap');
+  var d=ntRead(), n=NT.edit?ntNote(NT.edit):null;
+  if(m==='list'&&!d.items.length&&d.txt) d.items=d.txt.split('\n').map(function(x){return x.trim()}).filter(Boolean).map(function(x){return {t:x,done:false}});
+  if(m==='text'&&!d.txt&&d.items.length) d.txt=d.items.map(function(i){return i.t}).join('\n');
+  NT.mode=m; d.mode=m; d.d=n?n.d:today();
+  $('nt_slot').innerHTML=ntCompHtml(d,false);
+  setTimeout(function(){var a=$('nt_in')||document.querySelector('#nt_li .nt-lin'); if(a){a.focus({preventScroll:true}); if(a.id==='nt_in') ntGrow(a)}},30);
+}
+function ntAddRow(after){
+  var c=$('nt_li'); if(!c) return;
+  var html=ntLiEd({t:'',done:false});
+  if(after&&after.insertAdjacentHTML){after.insertAdjacentHTML('afterend',html); after=after.nextElementSibling}
+  else {c.insertAdjacentHTML('beforeend',html); after=c.lastElementChild}
+  sfx('tap'); after.querySelector('.nt-lin').focus();
+}
+function ntKey(e,el){
+  if(e.key==='Enter'){e.preventDefault();ntAddRow(el.parentNode)}
+  else if(e.key==='Backspace'&&!el.value){
+    var r=el.parentNode, p=r.previousElementSibling;
+    if(p){e.preventDefault();r.parentNode.removeChild(r);p.querySelector('.nt-lin').focus()}
+  }
+}
+function ntRmRow(b){
+  sfx('del'); var r=b.parentNode, c=r.parentNode;
+  if(c.children.length>1) c.removeChild(r); else r.querySelector('.nt-lin').value='';
+}
+function ntSave(){
+  var d=ntRead();
+  if(!(d.title||(NT.mode==='text'?d.txt:d.items.length))){var f=$('nt_t'); if(f) f.focus(); return}
+  D.notes=D.notes||[];
+  var rec={title:d.title,type:NT.mode,txt:NT.mode==='text'?d.txt:'',items:NT.mode==='list'?d.items:[]}, id;
+  if(NT.edit){
+    var n=ntNote(NT.edit); id=n.id; n.title=rec.title;n.type=rec.type;n.txt=rec.txt;n.items=rec.items;
+  } else {
+    id=Date.now(); rec.id=id; rec.d=today(); D.notes.unshift(rec);
+    if(window.sendToGoogleSheet&&window.formatNoteForSheet){window.sendToGoogleSheet('note',window.formatNoteForSheet(rec))}
+  }
+  NT.compose=false; NT.edit=null; NT.fresh=id;
+  $('nt_slot').innerHTML=''; save(); sfx('save'); ntList();
+  setTimeout(function(){NT.fresh=0},800);
+  var tst=$('toast'); if(tst){tst.textContent=t('note_saved');tst.classList.add('show');clearTimeout(fx.t);fx.t=setTimeout(function(){tst.classList.remove('show')},1500)}
+}
+function ntDel(id){
+  if(!confirm(t('note_del_q'))) return;
+  sfx('del'); D.notes=(D.notes||[]).filter(function(x){return x.id!==id}); delete NT.exp[id];
+  save(); ntList();
+}
+function ntExp(id){
+  var e=$('nti_'+id); if(!e) return;
+  sfx('tap'); NT.exp[id]=e.classList.toggle('on');
+}
+function ntChk(id,i){
+  var n=ntNote(id); if(!n||!n.items||!n.items[i]) return;
+  n.items[i].done=!n.items[i].done; save(); sfx('tap');
+  var r=$('ntl_'+id+'_'+i);
+  if(r){r.classList.toggle('done',n.items[i].done); r.querySelector('.nt-ck').classList.toggle('on',n.items[i].done)}
+  var p=$('ntp_'+id); if(p) p.textContent=ntProg(n);
+}
+
+/* ---- Pieces per kg & cost per piece (extra info, existing numbers untouched) ---- */
+function r2(x){return (Math.round(x*100)/100).toLocaleString('en-IN')}
+function pkBox(){
+  return '<div class="sec" style="margin-top:4px"><span>'+t('pk_title')+'</span></div>'
+   +'<div class="tiles" style="margin:0 0 16px">'
+   +'<div class="tile"><b id="pk_a">—</b><span>'+t('pk_ppk')+'</span></div>'
+   +'<div class="tile"><b id="pk_b">—</b><span>'+t('pk_fpp')+'</span></div>'
+   +'<div class="tile"><b id="pk_c">—</b><span>'+t('pk_cpp')+'</span></div></div>';
+}
+function pkUpd(){
+  if(!$('pk_a')) return;
+  var fbs=rws('fbl',fbF), ex=rws('exl',exF), cu=rws('cul',wkF), se=rws('sel',wkF);
+  var kg=sum(fbs,function(f){return f.kg}), fab=sum(fbs,function(f){return f.kg*f.r}), pcs=sum(cu,function(c){return c.q});
+  var cost=fab+sum(ex,function(e){return e.a})+cutPay({cuts:cu})+sewPay({sews:se});
+  $('pk_a').textContent=(kg>0&&pcs>0)?r2(pcs/kg)+' '+t('pcs'):'—';
+  $('pk_b').textContent=(pcs>0&&fab>0)?'৳'+r2(fab/pcs):'—';
+  $('pk_c').textContent=(pcs>0&&cost>0)?'৳'+r2(cost/pcs):'—';
+}
+var _gP0=gP; gP=function(){_gP0(); pkUpd()};
+function pkLine(x){
+  var kg=fabKg(x), pcs=x.pcs||0;
+  if(!(kg>0&&pcs>0)) return '';
+  return '<div class="mut">'+t('pk_ppk')+': <b>'+r2(pcs/kg)+' '+t('pcs')+'</b> · '+t('pk_fpp')+': <b>৳'+r2(fabCost(x)/pcs)+'</b></div>';
 }
 
 load();
@@ -1581,7 +1858,7 @@ v.classList.remove('sl');v.style.setProperty('--sx',dk?'0px':(d*70)+'px');v.styl
     var tx=db.transaction(ST,'readwrite'); tx.objectStore(ST).put(v,KEY);
     tx.oncomplete=res; tx.onerror=function(){rej(tx.error)};
   })})}
-  function hasData(d){return d&&((d.sales||[]).length||(d.prod||[]).length||(d.exp||[]).length)}
+  function hasData(d){return d&&((d.sales||[]).length||(d.prod||[]).length||(d.exp||[]).length||(d.notes||[]).length)}
   window._idbPut=idbPut;
 
   // save(): localStorage (instant) + IndexedDB (backup copy) with timestamp
@@ -1609,7 +1886,7 @@ v.classList.remove('sl');v.style.setProperty('--sx',dk?'0px':(d*70)+'px');v.styl
   // ---- Backup / Restore panel ----
   var css=document.createElement('style');
   css.textContent='#bk_w{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);padding:20px}'
-   +'#bk_w.on{display:flex}#bk_c{width:100%;max-width:360px;background:var(--bg1);color:var(--ink);border:1px solid var(--glb);border-radius:24px;padding:20px;box-shadow:var(--sh)}'
+   +'#bk_w.on{display:flex}#bk_c{width:100%;max-width:380px;max-height:86vh;overflow-y:auto;scrollbar-width:thin;background:var(--bg1);color:var(--ink);border:1px solid var(--glb);border-radius:24px;padding:20px;box-shadow:var(--sh)}'
    +'#bk_c h2{margin:0 0 6px}#bk_c button{width:100%;margin-top:10px;padding:13px;border-radius:14px;border:1px solid var(--glb);background:var(--soft);color:var(--ink);font:inherit;font-size:15px;cursor:pointer}'
    +'#bk_c button.p{background:var(--on);color:var(--onfg);border:0}';
   document.head.appendChild(css);
@@ -1644,7 +1921,7 @@ v.classList.remove('sl');v.style.setProperty('--sx',dk?'0px':(d*70)+'px');v.styl
         var j=JSON.parse(r.result), d=j.data||j;
         if(!d||!Array.isArray(d.sales)||!Array.isArray(d.prod)||!Array.isArray(d.exp)) throw 0;
         if(!confirm(LANG==='bn'?'বর্তমান ডেটা মুছে ব্যাকআপ ফাইলের ডেটা বসানো হবে। ঠিক আছে?':'This replaces current data with the backup. Continue?')) return;
-        D={sales:d.sales,prod:d.prod,exp:d.exp}; save(); render(); w.classList.remove('on');
+        D={sales:d.sales,prod:d.prod,exp:d.exp,notes:d.notes||[]}; save(); render(); w.classList.remove('on');
         flash(LANG==='bn'?'রিস্টোর সম্পন্ন ✓':'Restore complete ✓');
       }catch(e){alert(LANG==='bn'?'ফাইলটি সঠিক ব্যাকআপ নয়':'Not a valid backup file')}
     };
@@ -1673,7 +1950,7 @@ v.classList.remove('sl');v.style.setProperty('--sx',dk?'0px':(d*70)+'px');v.styl
   }
   function num(k){try{return +localStorage.getItem(k)||0}catch(e){return 0}}
   function setK(k,v){try{localStorage.setItem(k,v)}catch(e){}}
-  function hasData(d){return d&&((d.sales||[]).length||(d.prod||[]).length||(d.exp||[]).length)}
+  function hasData(d){return d&&((d.sales||[]).length||(d.prod||[]).length||(d.exp||[]).length||(d.notes||[]).length)}
   function flash(m){var t=$('toast');if(!t)return;t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2200)}
 
   // ---- UI inside the Backup panel ----
@@ -1724,7 +2001,7 @@ v.classList.remove('sl');v.style.setProperty('--sx',dk?'0px':(d*70)+'px');v.styl
         useCloud=confirm(bn()?'এই ফোন ও ক্লাউড দুই জায়গাতেই নতুন পরিবর্তন আছে।\nOK = ক্লাউডের ডেটা নিন (এই ফোনের নতুন পরিবর্তন বাদ)\nCancel = এই ফোনের ডেটা রাখুন (ক্লাউড ওভাররাইট হবে)':'Both this device and the cloud have new changes.\nOK = use cloud data (lose local changes)\nCancel = keep this device (overwrite cloud)');
       } else useCloud=remoteChanged;
       if(useCloud){
-        var d=r.data.data||{}; D={sales:d.sales||[],prod:d.prod||[],exp:d.exp||[]};
+        var d=r.data.data||{}; D={sales:d.sales||[],prod:d.prod||[],exp:d.exp||[],notes:d.notes||[]};
         setK(K,JSON.stringify(D)); setK(TK,rt); setK(SK,rt);
         if(window._idbPut) window._idbPut({t:rt,data:D}).catch(function(){});
         render(); status((bn()?'ক্লাউড থেকে আপডেট ✓ ':'Updated from cloud ✓ ')+new Date().toLocaleTimeString());
@@ -1763,8 +2040,6 @@ v.classList.remove('sl');v.style.setProperty('--sx',dk?'0px':(d*70)+'px');v.styl
   }
   labels(); ui();
 })();
-
-
 </script>
 <button class="fab" id="fab" aria-label="Calculator"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a1 1 0 011 1v16a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1zM8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></svg></button>
 <script>
@@ -1803,6 +2078,285 @@ v.classList.remove('sl');v.style.setProperty('--sx',dk?'0px':(d*70)+'px');v.styl
   f.addEventListener('pointerup',end); f.addEventListener('pointercancel',end);
   f.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openCalc()}});
   addEventListener('resize',apply); apply();
+})();
+</script>
+
+<script>
+/* ===== Google Sheets Automatic Realtime Sync (Backend & Archive) ===== */
+(function(){
+  var GS_KEY = 'khan_gsheet_url';
+  var gsUrl = '';
+  try { gsUrl = localStorage.getItem(GS_KEY) || ''; } catch(e){}
+
+  function getUrl(){
+    try { return localStorage.getItem(GS_KEY) || gsUrl || ''; } catch(e){ return gsUrl || ''; }
+  }
+
+  function setUrl(u){
+    gsUrl = (u || '').trim();
+    try { localStorage.setItem(GS_KEY, gsUrl); } catch(e){}
+    updateUI();
+  }
+
+  function send(action, data){
+    var u = getUrl();
+    if(!u || !/^https:\/\/script\.google\.com\//i.test(u)) {
+      return Promise.resolve(false);
+    }
+    var payload = {
+      action: action,
+      timestamp: new Date().toLocaleString(LANG==='bn'?'bn-BD':'en-GB'),
+      data: data
+    };
+    return fetch(u, {
+      method: 'POST',
+      mode: 'no-cors',
+      cache: 'no-cache',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    }).then(function(){
+      return true;
+    }).catch(function(err){
+      console.warn('Google Sheet Sync Error:', err);
+      return false;
+    });
+  }
+
+  window.sendToGoogleSheet = send;
+  window.setGoogleSheetUrl = setUrl;
+  window.getGoogleSheetUrl = getUrl;
+
+  window.formatSaleForSheet = function(x){
+    var types = {
+      retail: LANG==='bn' ? 'দোকানে নগদ (Retail)' : 'Retail',
+      cod: LANG==='bn' ? 'কুরিয়ার / বাকি (COD)' : 'COD',
+      custom: LANG==='bn' ? 'কাস্টম অর্ডার (Custom)' : 'Custom'
+    };
+    var itemsStr = itemsOf(x).map(function(i){
+      return (i.n ? i.n + ': ' : '') + nb(i.q) + ' pcs @ ' + fm(i.r);
+    }).join('; ');
+    var total = stot(x);
+    var paid = x.paid || 0;
+    return {
+      id: x.id,
+      date: x.d || today(),
+      type: types[x.type] || x.type,
+      customer: x.name,
+      items: itemsStr,
+      qty: x.qty,
+      total: total,
+      paid: paid,
+      due: total - paid,
+      note: x.note || ''
+    };
+  };
+
+  window.formatProdForSheet = function(x){
+    var fbs = fabricsOf(x).map(function(f){
+      return (f.n ? f.n + ': ' : '') + nb(f.kg) + ' kg @ ' + fm(f.r);
+    }).join('; ');
+    var clrs = (x.colors || []).map(function(c){
+      return c.n + ': ' + nb(c.q) + ' pcs';
+    }).join('; ');
+    var cuts = (x.cuts || []).map(function(c){
+      return (c.n || (LANG==='bn'?'কাটিং':'Cutting')) + (c.it ? ' (' + c.it + ')' : '') + ': ' + nb(c.q) + ' pcs @ ' + fm(c.r) + ' = ' + fm(c.q*c.r);
+    }).join('; ');
+    var sews = (x.sews || []).map(function(s){
+      return (s.n || (LANG==='bn'?'সেলাই':'Sewing')) + (s.it ? ' (' + s.it + ')' : '') + ': ' + nb(s.q) + ' pcs @ ' + fm(s.r) + ' = ' + fm(s.q*s.r);
+    }).join('; ');
+    var extras = (x.extras || []).map(function(e){
+      return e.n + ': ' + fm(e.a);
+    }).join('; ');
+
+    var totalCost = pcost(x);
+    var totalKg = fabKg(x);
+    var pcs = x.pcs || 0;
+    var fCost = fabCost(x);
+
+    return {
+      id: x.id,
+      date: x.d || today(),
+      total_kg: totalKg,
+      fabric_details: fbs,
+      fabric_cost: fCost,
+      colors: clrs,
+      cuts: cuts,
+      cut_pay: cutPay(x),
+      sews: sews,
+      sew_pay: sewPay(x),
+      extras: extras,
+      extra_cost: x.oth || 0,
+      pcs: pcs,
+      total_cost: totalCost,
+      pcs_per_kg: (totalKg > 0 && pcs > 0) ? (pcs / totalKg).toFixed(2) : '0',
+      fab_per_pc: (pcs > 0) ? (fCost / pcs).toFixed(2) : '0',
+      cost_per_pc: (pcs > 0) ? (totalCost / pcs).toFixed(2) : '0'
+    };
+  };
+
+  window.formatExpForSheet = function(x){
+    return {
+      id: x.id,
+      date: x.d || today(),
+      category: x.cat,
+      amount: x.amt
+    };
+  };
+
+  window.formatNoteForSheet = function(n){
+    var content = n.type === 'list'
+      ? (n.items || []).map(function(i){ return (i.done ? '[✓] ' : '[ ] ') + i.t; }).join('; ')
+      : (n.txt || '');
+    return {
+      id: n.id,
+      date: n.d || today(),
+      title: n.title || (LANG==='bn'?'নোট':'Note'),
+      type: n.type === 'list' ? (LANG==='bn'?'চেকলিস্ট':'Checklist') : (LANG==='bn'?'টেক্সট':'Text'),
+      content: content
+    };
+  };
+
+  // ---- UI inside Backup / Restore Panel ----
+  var gsBox = document.createElement('div');
+  gsBox.style.cssText = 'margin-top:14px;padding-top:14px;border-top:1px solid var(--line)';
+  gsBox.innerHTML = '<b id="gs_t"></b><div class="mut" id="gs_s" style="margin-top:4px"></div>'
+   +'<input id="gs_u" type="url" placeholder="Google Web App URL" style="margin-top:10px">'
+   +'<div style="display:flex;gap:8px;margin-top:8px"><button class="p" id="gs_sv" style="flex:1"></button><button id="gs_all" style="flex:1"></button></div>'
+   +'<button id="gs_view_code" style="margin-top:8px;font-size:12.5px;padding:9px"></button>';
+
+  var bkc = document.getElementById('bk_c');
+  if(bkc){
+    var bkCl = document.getElementById('bk_cl');
+    if(bkCl) bkCl.parentNode.insertBefore(gsBox, bkCl);
+    else bkc.appendChild(gsBox);
+  }
+
+  function updateUI(){
+    var u = getUrl();
+    var bn = LANG==='bn';
+    if(document.getElementById('gs_t')) document.getElementById('gs_t').textContent = bn ? '📊 গুগল স্প্রেডশিট অটো-সিঙ্ক (Google Sheets)' : '📊 Google Sheets Auto-Sync';
+    var uIn = document.getElementById('gs_u');
+    if(uIn) {
+      uIn.placeholder = bn ? 'Google Apps Script Web App URL পেস্ট করুন…' : 'Paste Google Web App URL…';
+      if(document.activeElement !== uIn) uIn.value = u;
+    }
+    if(document.getElementById('gs_sv')) document.getElementById('gs_sv').textContent = bn ? '💾 URL সেভ করুন' : '💾 Save URL';
+    if(document.getElementById('gs_all')) document.getElementById('gs_all').textContent = bn ? '📤 সব ডেটা পাঠান' : '📤 Sync All Data';
+    if(document.getElementById('gs_view_code')) document.getElementById('gs_view_code').textContent = bn ? '📋 Google Apps Script কোড ও সেটআপ' : '📋 View Google Apps Script Code';
+    
+    var sEl = document.getElementById('gs_s');
+    if(sEl){
+      if(!u) sEl.textContent = bn ? 'URL দেওয়া নেই। নতুন এন্ট্রি অটো-সেভ হতে নিচে URL দিন।' : 'No URL set. Add Web App URL below to auto-sync.';
+      else sEl.textContent = bn ? '🟢 সক্রিয় ✓ নতুন এন্ট্রি হলে গুগল শিটে অটো জমা হবে।' : '🟢 Active ✓ Every entry auto-appends to Google Sheets.';
+    }
+  }
+
+  // Hook into openBackup to refresh UI
+  var _oldOpen = window.openBackup;
+  window.openBackup = function(){
+    if(_oldOpen) _oldOpen();
+    updateUI();
+  };
+
+  // Event handlers
+  var svBtn = document.getElementById('gs_sv');
+  if(svBtn){
+    svBtn.onclick = function(){
+      var val = (document.getElementById('gs_u').value || '').trim();
+      if(!val){
+        alert(LANG==='bn'?'দয়া করে Web App URL টি দিন':'Please enter the Web App URL');
+        return;
+      }
+      setUrl(val);
+      var sEl = document.getElementById('gs_s');
+      if(sEl) sEl.textContent = LANG==='bn'?'URL সংরক্ষিত হয়েছে ✓':'URL saved ✓';
+      var tst = document.getElementById('toast');
+      if(tst){
+        tst.textContent = LANG==='bn'?'URL সংরক্ষিত হয়েছে ✓':'URL saved ✓';
+        tst.classList.add('show');
+        setTimeout(function(){tst.classList.remove('show')},1600);
+      }
+    };
+  }
+
+  var allBtn = document.getElementById('gs_all');
+  if(allBtn){
+    allBtn.onclick = function(){
+      var u = getUrl();
+      if(!u){
+        alert(LANG==='bn' ? 'দয়া করে আগে Google Apps Script Web App URL টি দিন!' : 'Please enter your Google Apps Script Web App URL first!');
+        return;
+      }
+      var sEl = document.getElementById('gs_s');
+      if(sEl) sEl.textContent = LANG==='bn' ? 'গুগল শিটে ডেটা পাঠানো হচ্ছে…' : 'Syncing data to Google Sheets…';
+      var payload = {
+        sales: (D.sales||[]).map(window.formatSaleForSheet),
+        prod: (D.prod||[]).map(window.formatProdForSheet),
+        exp: (D.exp||[]).map(window.formatExpForSheet),
+        notes: (D.notes||[]).map(window.formatNoteForSheet)
+      };
+      send('sync_all', payload).then(function(){
+        if(sEl) sEl.textContent = (LANG==='bn' ? 'সব ডেটা সফলভাবে গুগল শিটে পাঠানো হয়েছে ✓ ' : 'All data saved to Google Sheets ✓ ') + new Date().toLocaleTimeString();
+        var tst = document.getElementById('toast');
+        if(tst){
+          tst.textContent = LANG==='bn' ? 'গুগল শিট ব্যাকআপ সম্পন্ন ✓' : 'Google Sheets backup complete ✓';
+          tst.classList.add('show');
+          setTimeout(function(){ tst.classList.remove('show'); }, 2200);
+        }
+      });
+    };
+  }
+
+  // Code modal
+  var codeModal = document.createElement('div');
+  codeModal.id = 'gs_modal';
+  codeModal.style.cssText = 'position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.65);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:14px;';
+
+  var gasSource = "/**\n * ====================================================================\n * Khan Brothers Fashion - Google Sheets Automatic Realtime Sync Script\n * ====================================================================\n * এই স্ক্রিপ্টটি আপনার গুগল শিটে স্বয়ংক্রিয়ভাবে ৪টি ট্যাব তৈরি করবে:\n * ১. বিক্রি (Sales)\n * ২. উৎপাদন (Production)\n * ৩. খরচ (Expenses)\n * ৪. নোট (Notes)\n * \n * অ্যাপ থেকে কোনো এন্ট্রি ডিলিট করলেও গুগল শিটের ডাটা আজীবনের জন্য সুরক্ষিত থাকবে।\n */\n\n// >>> যদি শিট স্বয়ংক্রিয়ভাবে না পায়, তবে আপনার শিটের সম্পূর্ণ URL বা ID এখানে বসাতে পারেন (ঐচ্ছিক) <<<\nvar SPREADSHEET_ID = \"\"; // উদাহরণ: \"1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms\" অথবা সম্পূর্ণ শিটের লিংক\n\n// হেডারসমূহ\nvar HEADERS_SALE = ['এন্ট্রি আইডি (ID)', 'তারিখ (Date)', 'বিক্রির ধরন (Type)', 'কাস্টমার / দোকানদার', 'আইটেম বিবরণ', 'মোট পিস (Qty)', 'মোট টাকা (Total ৳)', 'নগদ / জমা (Paid ৳)', 'বাকি টাকা (Due ৳)', 'নোট / মন্তব্য', 'রেকর্ড সময় (Timestamp)'];\nvar HEADERS_PROD = ['এন্ট্রি আইডি (ID)', 'তারিখ (Date)', 'মোট কাপড় (কেজি)', 'ফেব্রিক ও রেট বিবরণ', 'কাপড়ের মোট খরচ (৳)', 'কালার বিবরণ', 'কাটিং বিবরণ ও রেট', 'কাটিং মোট মজুরি (৳)', 'সেলাই বিবরণ ও রেট', 'সেলাই মোট মজুরি (৳)', 'এক্সেসরিজ খরচ বিবরণ', 'এক্সেসরিজ মোট খরচ (৳)', 'মোট তৈরি পিস (Qty)', 'ব্যাচের সর্বমোট খরচ (৳)', 'কেজি প্রতি পিস', 'পিস প্রতি কাপড় (গ্রাম)', 'পিস প্রতি মোট খরচ (৳)', 'রেকর্ড সময় (Timestamp)'];\nvar HEADERS_EXP  = ['এন্ট্রি আইডি (ID)', 'তারিখ (Date)', 'খরচের খাত (Category)', 'টাকার পরিমাণ (Amount ৳)', 'রেকর্ড সময় (Timestamp)'];\nvar HEADERS_NOTE = ['নোট আইডি (ID)', 'তারিখ (Date)', 'নোটের শিরোনাম', 'ধরন (Type)', 'বিবরণ / চেকলিস্ট', 'রেকর্ড সময় (Timestamp)'];\n\n// গুগল শিট খোঁজার স্মার্ট ফাংশন\nfunction getSpreadsheet() {\n  if (SPREADSHEET_ID && SPREADSHEET_ID.trim() !== \"\") {\n    var raw = SPREADSHEET_ID.trim();\n    // সম্পূর্ণ URL পেস্ট করলেও স্বয়ংক্রিয়ভাবে ID বের করে নিবে\n    var match = raw.match(/\\/spreadsheets\\/d\\/([a-zA-Z0-9-_]+)/);\n    var id = match ? match[1] : raw;\n    try {\n      return SpreadsheetApp.openById(id);\n    } catch(err) {\n      Logger.log(\"openById error: \" + err);\n    }\n  }\n  try {\n    var active = SpreadsheetApp.getActiveSpreadsheet();\n    if (active) return active;\n  } catch(e) {}\n  return null;\n}\n\n/**\n * টেস্ট ফাংশন: কোড এডিটরে এটি সিলেক্ট করে 'Run' দিলে সাথে সাথে গুগল শিটে ৪টি ট্যাব তৈরি হবে।\n */\nfunction testConnection() {\n  var ss = getSpreadsheet();\n  if (!ss) {\n    throw new Error(\"❌ কোনো Google Spreadsheet পাওয়া যায়নি! অনুগ্রহ করে আপনার গুগল শিটের URL থেকে ID কপি করে কোডের উপরে var SPREADSHEET_ID = '...'; এর মধ্যে বসান।\");\n  }\n  Logger.log(\"✅ শিট কানেক্ট হয়েছে: \" + ss.getName());\n  getOrCreateSheet(ss, 'বিক্রি (Sales)', HEADERS_SALE, '#1e3a5f');\n  getOrCreateSheet(ss, 'উৎপাদন (Production)', HEADERS_PROD, '#0e4a3b');\n  getOrCreateSheet(ss, 'খরচ (Expenses)', HEADERS_EXP, '#7f1d1d');\n  getOrCreateSheet(ss, 'নোট (Notes)', HEADERS_NOTE, '#4a044e');\n  Logger.log(\"✅ সফল! গুগল শিটে ৪টি ট্যাব (Sales, Production, Expenses, Notes) তৈরি হয়ে গেছে। এখন শিটটি রিফ্রেশ দিয়ে দেখুন।\");\n}\n\nfunction doPost(e) {\n  try {\n    if (!e || !e.postData || !e.postData.contents) {\n      return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'No payload received' }))\n        .setMimeType(ContentService.MimeType.JSON);\n    }\n\n    var payload = JSON.parse(e.postData.contents);\n    var action = payload.action;\n    var data = payload.data || {};\n    var timestamp = payload.timestamp || Utilities.formatDate(new Date(), \"Asia/Dhaka\", \"dd/MM/yyyy hh:mm:ss a\");\n\n    var ss = getSpreadsheet();\n    if (!ss) {\n      throw new Error(\"Spreadsheet not found! Please set SPREADSHEET_ID in Code.gs with your Google Sheet ID or URL.\");\n    }\n\n    // নিশ্চিত করুন ৪টি ট্যাব শিটে বিদ্যমান আছে\n    getOrCreateSheet(ss, 'বিক্রি (Sales)', HEADERS_SALE, '#1e3a5f');\n    getOrCreateSheet(ss, 'উৎপাদন (Production)', HEADERS_PROD, '#0e4a3b');\n    getOrCreateSheet(ss, 'খরচ (Expenses)', HEADERS_EXP, '#7f1d1d');\n    getOrCreateSheet(ss, 'নোট (Notes)', HEADERS_NOTE, '#4a044e');\n\n    if (action === 'sale') {\n      logSale(ss, data, timestamp);\n    } else if (action === 'prod') {\n      logProd(ss, data, timestamp);\n    } else if (action === 'exp') {\n      logExp(ss, data, timestamp);\n    } else if (action === 'note') {\n      logNote(ss, data, timestamp);\n    } else if (action === 'sync_all') {\n      if (data.sales && data.sales.length) {\n        for (var i = 0; i < data.sales.length; i++) logSale(ss, data.sales[i], timestamp);\n      }\n      if (data.prod && data.prod.length) {\n        for (var j = 0; j < data.prod.length; j++) logProd(ss, data.prod[j], timestamp);\n      }\n      if (data.exp && data.exp.length) {\n        for (var k = 0; k < data.exp.length; k++) logExp(ss, data.exp[k], timestamp);\n      }\n      if (data.notes && data.notes.length) {\n        for (var m = 0; m < data.notes.length; m++) logNote(ss, data.notes[m], timestamp);\n      }\n    }\n\n    return ContentService.createTextOutput(JSON.stringify({ status: 'success', action: action }))\n      .setMimeType(ContentService.MimeType.JSON);\n\n  } catch (err) {\n    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: err.toString() }))\n      .setMimeType(ContentService.MimeType.JSON);\n  }\n}\n\nfunction getOrCreateSheet(ss, name, headers, headerColor) {\n  var sheet = ss.getSheetByName(name);\n  if (!sheet) {\n    sheet = ss.insertSheet(name);\n    sheet.appendRow(headers);\n    var headerRange = sheet.getRange(1, 1, 1, headers.length);\n    headerRange.setBackground(headerColor || '#141414');\n    headerRange.setFontColor('#ffffff');\n    headerRange.setFontWeight('bold');\n    headerRange.setHorizontalAlignment('center');\n    sheet.setFrozenRows(1);\n    for (var c = 1; c <= headers.length; c++) {\n      sheet.autoResizeColumn(c);\n    }\n  }\n  return sheet;\n}\n\nfunction logSale(ss, d, time) {\n  var sheet = getOrCreateSheet(ss, 'বিক্রি (Sales)', HEADERS_SALE, '#1e3a5f');\n  sheet.appendRow([\n    d.id || '',\n    d.date || '',\n    d.type || '',\n    d.customer || '',\n    d.items || '',\n    d.qty || 0,\n    d.total || 0,\n    d.paid || 0,\n    d.due || 0,\n    d.note || '',\n    time\n  ]);\n}\n\nfunction logProd(ss, d, time) {\n  var sheet = getOrCreateSheet(ss, 'উৎপাদন (Production)', HEADERS_PROD, '#0e4a3b');\n  sheet.appendRow([\n    d.id || '',\n    d.date || '',\n    d.total_kg || 0,\n    d.fabric_details || '',\n    d.fabric_cost || 0,\n    d.colors || '',\n    d.cuts || '',\n    d.cut_pay || 0,\n    d.sews || '',\n    d.sew_pay || 0,\n    d.extras || '',\n    d.extra_cost || 0,\n    d.pcs || 0,\n    d.total_cost || 0,\n    d.pcs_per_kg || 0,\n    d.fab_per_pc || 0,\n    d.cost_per_pc || 0,\n    time\n  ]);\n}\n\nfunction logExp(ss, d, time) {\n  var sheet = getOrCreateSheet(ss, 'খরচ (Expenses)', HEADERS_EXP, '#7f1d1d');\n  sheet.appendRow([\n    d.id || '',\n    d.date || '',\n    d.category || '',\n    d.amount || 0,\n    time\n  ]);\n}\n\nfunction logNote(ss, d, time) {\n  var sheet = getOrCreateSheet(ss, 'নোট (Notes)', HEADERS_NOTE, '#4a044e');\n  sheet.appendRow([\n    d.id || '',\n    d.date || '',\n    d.title || '',\n    d.type || '',\n    d.content || '',\n    time\n  ]);\n}\n\nfunction doGet(e) {\n  var ss = getSpreadsheet();\n  var info = ss ? (\"Connected to Sheet: \" + ss.getName()) : \"Spreadsheet not connected yet!\";\n  return ContentService.createTextOutput(\"Khan Brothers Fashion Sync Webhook Active!\\n\" + info)\n    .setMimeType(ContentService.MimeType.TEXT);\n}\n";
+
+  codeModal.innerHTML = '<div style="background:var(--bg1);color:var(--ink);border:1px solid var(--glb);border-radius:24px;padding:20px;max-width:540px;width:100%;max-height:85vh;display:flex;flex-direction:column;box-shadow:var(--sh);">'
+    +'<h3 style="margin:0 0 8px;font-size:16px" id="gsm_t">Google Apps Script কোড ও সেটআপ</h3>'
+    +'<div class="mut" style="font-size:12px;line-height:1.5;margin-bottom:10px" id="gsm_d">'
+    +'<b>সহজ সেটআপ ধাপ:</b><br>'
+    +'১. একটি Google Sheet খুলুন (নাম দিন: Khan Brothers Database)<br>'
+    +'২. মেনু থেকে <b>Extensions > Apps Script</b>-এ যান<br>'
+    +'৩. ভেতরের সব মুছে নিচের কোডটি পেস্ট করুন<br>'
+    +'৪. <b>Deploy > New deployment > Web app</b> সিলেক্ট করুন<br>'
+    +'৫. Execute as: <b>Me</b>, Who has access: <b>Anyone</b> দিয়ে Deploy করুন<br>'
+    +'৬. প্রাপ্ত <b>Web App URL</b> কপি করে অ্যাপে পেস্ট করুন।'
+    +'</div>'
+    +'<textarea id="gsm_ta" readonly style="flex:1;min-height:180px;font-family:monospace;font-size:11px;padding:10px;border-radius:12px;background:var(--soft);color:var(--ink);border:1px solid var(--line);resize:none;white-space:pre;"></textarea>'
+    +'<div style="display:flex;gap:10px;margin-top:12px;">'
+    +'<button class="p" id="gsm_cp" style="flex:1;padding:12px;border-radius:12px;background:var(--on);color:var(--onfg);border:0;font:inherit;cursor:pointer">📋 কোড কপি করুন</button>'
+    +'<button id="gsm_cl" style="padding:12px 18px;border-radius:12px;background:var(--soft);color:var(--ink);border:1px solid var(--glb);font:inherit;cursor:pointer">বন্ধ করুন</button>'
+    +'</div></div>';
+  document.body.appendChild(codeModal);
+
+  var viewCodeBtn = document.getElementById('gs_view_code');
+  if(viewCodeBtn){
+    viewCodeBtn.onclick = function(){
+      document.getElementById('gsm_ta').value = gasSource;
+      codeModal.style.display = 'flex';
+    };
+  }
+  document.getElementById('gsm_cl').onclick = function(){ codeModal.style.display = 'none'; };
+  codeModal.onclick = function(e){ if(e.target === codeModal) codeModal.style.display = 'none'; };
+  document.getElementById('gsm_cp').onclick = function(){
+    var ta = document.getElementById('gsm_ta');
+    ta.select();
+    try {
+      navigator.clipboard.writeText(gasSource).then(function(){
+        document.getElementById('gsm_cp').textContent = LANG==='bn'?'✓ কপি হয়েছে!':'✓ Copied!';
+        setTimeout(function(){document.getElementById('gsm_cp').textContent = LANG==='bn'?'📋 কোড কপি করুন':'📋 Copy Code';}, 2000);
+      });
+    } catch(err){
+      document.execCommand('copy');
+      document.getElementById('gsm_cp').textContent = LANG==='bn'?'✓ কপি হয়েছে!':'✓ Copied!';
+      setTimeout(function(){document.getElementById('gsm_cp').textContent = LANG==='bn'?'📋 কোড কপি করুন':'📋 Copy Code';}, 2000);
+    }
+  };
+
+  updateUI();
 })();
 </script>
 </body>
