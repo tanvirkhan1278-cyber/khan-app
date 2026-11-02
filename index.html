@@ -579,6 +579,22 @@ nav button{gap:4px}
 .nt-b.sm2{width:34px;height:34px}.nt-b.sm2 svg.ic{width:17px;height:17px}
 .nt-b.dl{color:#ff8a80}
 @media(prefers-reduced-motion:reduce){.nt *{transition:none!important;animation:none!important}}
+
+/* ---- Month groups (collapsible) ---- */
+.mg{border:1px solid var(--line);border-radius:18px;margin:10px 0;overflow:hidden;background:var(--soft)}
+.mg-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}
+.mg-h:active{filter:brightness(.95)}
+.mg-t{font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mg-n{font-weight:500;font-size:12px;background:var(--on);color:var(--onfg);padding:1px 9px;border-radius:999px}
+.mg-s{display:flex;align-items:center;gap:10px;text-align:right;font-weight:700;font-size:14px}
+.mg-s .mut{font-weight:400}
+.mg-c{display:inline-flex;transition:transform .2s}
+.mg-c svg.ic{width:18px;height:18px}
+.mg.open .mg-c{transform:rotate(180deg)}
+.mg-b{display:none;padding:0 14px 6px;background:var(--bg1)}
+.mg.open .mg-b{display:block}
+.mg-b>.row:first-child{border-top:0}
+.mg-b.lg{padding-bottom:14px;padding-top:12px}
 </style>
 </head>
 <body>
@@ -923,6 +939,35 @@ function togW(id,kd,j){
   fx(render);
 }
 function chkBtn(on,fn){return '<button class="chk'+(on?' on':'')+'" aria-label="Paid" onclick="'+fn+'">'+ic('chk')+'</button>'}
+/* ===== Month grouping (collapsible month blocks) ===== */
+var MO={};
+var MF_BN=['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
+var MF_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function mKey(d){var m=/^(\d{4})-(\d{2})/.exec(d||'');return m?m[1]+'-'+m[2]:today().slice(0,7)}
+function mLabel(k){
+  var p=k.split('-'), y=p[0];
+  if(LANG==='bn') y=y.replace(/\d/g,function(c){return '০১২৩৪৫৬৭৮৯'[c]});
+  return (LANG==='bn'?MF_BN:MF_EN)[+p[1]-1]+' '+y;
+}
+function mIsOpen(id,k){ if(id in MO) return MO[id]; return k===today().slice(0,7) }
+function mTog(id,el){
+  sfx('tap');
+  var g=el.parentNode, k=id.split('|')[1], o=!mIsOpen(id,k);
+  MO[id]=o; g.classList.toggle('open',o);
+}
+function monthGroups(scope,arr,dateOf,sumFn,oneFn,bodyCls){
+  var g={}, keys=[];
+  arr.forEach(function(x){var k=mKey(dateOf(x)); if(!g[k]){g[k]=[];keys.push(k)} g[k].push(x)});
+  keys.sort().reverse();
+  return keys.map(function(k){
+    var id=scope+'|'+k, a=g[k], open=mIsOpen(id,k);
+    return '<div class="mg'+(open?' open':'')+'"><div class="mg-h" onclick="mTog(\''+id+'\',this)">'
+      +'<div class="mg-t">'+mLabel(k)+'<span class="mg-n">'+nb(a.length)+' '+t('entries')+'</span></div>'
+      +'<div class="mg-s"><span>'+sumFn(a)+'</span><span class="mg-c">'+ic('chev')+'</span></div></div>'
+      +'<div class="mg-b'+(bodyCls?' '+bodyCls:'')+'">'+a.map(oneFn).join('')+'</div></div>';
+  }).join('');
+}
+
 function pager(total,fn){
   var p=Math.ceil(total/PER);
   if(p<2)return '';
@@ -966,6 +1011,7 @@ function put(k,o){
   } else {
     D[k].push(o);
   }
+  MO[k+'|'+mKey(o.d)]=true;
   ed=null;
 }
 
@@ -1138,13 +1184,16 @@ function sales(){
   h+='<div class="f"><div><label>'+t('date')+'</label><input type="date" id="s_d" value="'+today()+'"></div><div><label>'+t('cust_name')+'</label><input id="s_n"></div><div id="adv" style="display:'+(st==='custom'?'block':'none')+'"><label>'+t('adv_recv')+'</label><input type="number" id="s_a" inputmode="numeric"></div><div id="dn" style="display:'+(st==='custom'?'block':'none')+'"><label>'+t('design_note')+'</label><input id="s_o"></div></div><label style="display:block;margin-top:4px">'+t('items')+'</label><div id="itl" oninput="gT()">'+itRow('','','')+'</div><button class="sm" onclick="addIt()">'+t('add_item')+'</button><div class="mut" style="margin:10px 0 12px">'+t('order_total')+' <b id="gt">৳0</b></div><button class="btn" onclick="addSale()">'+t('save_sale')+'</button><span class="err" id="err"></span></div>';
   
   var L=D.sales.slice().reverse();
-  h+='<div class="card"><div class="hd"><h2 style="margin:0">'+t('sales_list')+'</h2><div class="vt"><button aria-label="List" class="'+(vm==='list'?'on':'')+'" onclick="setVm(\'list\')">'+ic('list')+'</button><button aria-label="Grid" class="'+(vm==='grid'?'on':'')+'" onclick="setVm(\'grid\')">'+ic('grid')+'</button></div></div><div class="'+(vm==='grid'?'lg':'')+'">';
+  h+='<div class="card"><div class="hd"><h2 style="margin:0">'+t('sales_list')+'</h2><div class="vt"><button aria-label="List" class="'+(vm==='list'?'on':'')+'" onclick="setVm(\'list\')">'+ic('list')+'</button><button aria-label="Grid" class="'+(vm==='grid'?'on':'')+'" onclick="setVm(\'grid\')">'+ic('grid')+'</button></div></div><div>';
   if(!L.length) h+='<div class="empty">'+t('no_sales')+'</div>';
-  L.slice((pg-1)*PER,pg*PER).forEach(function(x){
+  h+=monthGroups('sales',L,function(x){return x.d},function(a){
+    var tv=sum(a,stot), dv=tv-sum(a,function(x){return x.paid});
+    return fm(tv)+(dv>0?'<span class="mut bad">'+t('due_amt')+' '+fm(dv)+'</span>':'');
+  },function(x){
     var due=stot(x)-x.paid;
-    h+='<div class="row"><div>'+esc(x.name)+'<span class="tag">'+types[x.type]+'</span><div class="mut">'+x.d+(x.note?' · '+esc(x.note):'')+'</div>'+itemsOf(x).map(function(i){return '<div class="mut">'+(i.n?esc(i.n)+' · ':'')+nb(i.q)+' '+t('pcs')+' × '+fm(i.r)+'</div>'}).join('')+'</div><div class="tr"><div style="text-align:right">'+fm(stot(x))+(due>0?'<div class="bad mut">'+t('due_amt')+' '+fm(due)+'</div>':'<div class="good mut">'+t('paid_full')+'</div>')+'</div>'+chkBtn(due<=0,'settle('+x.id+')')+'<button class="sm" onclick="edit(\'sales\','+x.id+')">'+t('edit')+'</button><button class="sm" onclick="del(\'sales\','+x.id+')">'+t('delete')+'</button></div></div>';
-  });
-  return h+'</div>'+pager(L.length,'setPg')+'</div>';
+    return '<div class="row"><div>'+esc(x.name)+'<span class="tag">'+types[x.type]+'</span><div class="mut">'+x.d+(x.note?' · '+esc(x.note):'')+'</div>'+itemsOf(x).map(function(i){return '<div class="mut">'+(i.n?esc(i.n)+' · ':'')+nb(i.q)+' '+t('pcs')+' × '+fm(i.r)+'</div>'}).join('')+'</div><div class="tr"><div style="text-align:right">'+fm(stot(x))+(due>0?'<div class="bad mut">'+t('due_amt')+' '+fm(due)+'</div>':'<div class="good mut">'+t('paid_full')+'</div>')+'</div>'+chkBtn(due<=0,'settle('+x.id+')')+'<button class="sm" onclick="edit(\'sales\','+x.id+')">'+t('edit')+'</button><button class="sm" onclick="del(\'sales\','+x.id+')">'+t('delete')+'</button></div></div>';
+  },vm==='grid'?'lg':'');
+  return h+'</div></div>';
 }
 
 /* Production Multi-Fabric Rows */
@@ -1373,7 +1422,9 @@ function prod(){
     }).join('');
   };
   
-  D.prod.slice().reverse().forEach(function(x){
+  h+=monthGroups('prod',D.prod.slice().reverse(),function(x){return x.d},function(a){
+    return nb(sum(a,function(x){return x.pcs}))+' '+t('pcs')+' · '+fm(sum(a,pcost));
+  },function(x){
     var xKg=fabKg(x), fbs=fabricsOf(x);
     var fabStr=fbs.map(function(f){return (f.n?esc(f.n)+' ':'')+nb(f.kg)+' kg × '+fm(f.r)}).join(', ');
     
@@ -1385,8 +1436,8 @@ function prod(){
       }).join('')+'</div>';
     }
     
-    h+='<div class="row"><div><b>'+x.d+' · '+nb(x.pcs)+' '+t('pcs')+'</b><div class="mut">'+t('material_sec')+': '+fabStr+' (Total: '+nb(xKg)+' kg) · '+t('per_piece')+': '+nb(x.pcs>0?(xKg*1000/x.pcs):0)+' g</div>'+clrStr+pkLine(x)+'<div class="mut">'+t('material_sec')+' '+fm(fabCost(x))+' · '+t('extras_lbl')+' '+fm(x.oth)+' · '+t('cut_lbl')+' '+fm(cutPay(x))+' · '+t('sew_lbl')+' '+fm(sewPay(x))+'</div>'+(x.extras&&x.extras.length?'<div class="mut">'+t('extras_lbl')+': '+x.extras.map(function(e){return esc(e.n)+' '+fm(e.a)}).join(', ')+'</div>':'')+ln(t('cut_lbl'),x.cuts||[])+ln(t('sew_lbl'),x.sews||[])+'</div><div class="tr"><div style="text-align:right">'+fm(pcost(x))+'<div class="mut">'+t('per_piece')+' '+fm(x.pcs>0?(pcost(x)/x.pcs):0)+'</div></div><button class="sm" onclick="edit(\'prod\','+x.id+')">'+t('edit')+'</button><button class="sm" onclick="del(\'prod\','+x.id+')">'+t('delete')+'</button></div></div>';
-  });
+    return '<div class="row"><div><b>'+x.d+' · '+nb(x.pcs)+' '+t('pcs')+'</b><div class="mut">'+t('material_sec')+': '+fabStr+' (Total: '+nb(xKg)+' kg) · '+t('per_piece')+': '+nb(x.pcs>0?(xKg*1000/x.pcs):0)+' g</div>'+clrStr+pkLine(x)+'<div class="mut">'+t('material_sec')+' '+fm(fabCost(x))+' · '+t('extras_lbl')+' '+fm(x.oth)+' · '+t('cut_lbl')+' '+fm(cutPay(x))+' · '+t('sew_lbl')+' '+fm(sewPay(x))+'</div>'+(x.extras&&x.extras.length?'<div class="mut">'+t('extras_lbl')+': '+x.extras.map(function(e){return esc(e.n)+' '+fm(e.a)}).join(', ')+'</div>':'')+ln(t('cut_lbl'),x.cuts||[])+ln(t('sew_lbl'),x.sews||[])+'</div><div class="tr"><div style="text-align:right">'+fm(pcost(x))+'<div class="mut">'+t('per_piece')+' '+fm(x.pcs>0?(pcost(x)/x.pcs):0)+'</div></div><button class="sm" onclick="edit(\'prod\','+x.id+')">'+t('edit')+'</button><button class="sm" onclick="del(\'prod\','+x.id+')">'+t('delete')+'</button></div></div>';
+  },'');
   return h+'</div>';
 }
 
@@ -1521,9 +1572,11 @@ function exp(){
   var cats=[t('cat_rent'),t('cat_elec'),t('cat_pack'),t('cat_courier'),t('cat_other')];
   var h='<div class="card"><h2>'+t('new_exp_title')+'</h2><div class="f"><div><label>'+t('date')+'</label><input type="date" id="e_d" value="'+today()+'"></div><div><label>'+t('cat')+'</label><select id="e_c">'+cats.map(function(c){return '<option>'+c+'</option>'}).join('')+'</select></div><div><label>'+t('amt_ph')+'</label><input type="number" id="e_a" inputmode="numeric"></div></div><button class="btn" onclick="addExp()">'+t('save_exp')+'</button><span class="err" id="err"></span></div><div class="card"><h2>'+t('exp_list')+'</h2>';
   if(!D.exp.length) h+='<div class="empty">'+t('no_exp')+'</div>';
-  D.exp.slice().reverse().forEach(function(x){
-    h+='<div class="row"><div>'+esc(x.cat)+'<div class="mut">'+x.d+'</div></div><div class="tr">'+fm(x.amt)+' <button class="sm" onclick="edit(\'exp\','+x.id+')">'+t('edit')+'</button><button class="sm" onclick="del(\'exp\','+x.id+')">'+t('delete')+'</button></div></div>';
-  });
+  h+=monthGroups('exp',D.exp.slice().reverse(),function(x){return x.d},function(a){
+    return fm(sum(a,function(x){return x.amt}));
+  },function(x){
+    return '<div class="row"><div>'+esc(x.cat)+'<div class="mut">'+x.d+'</div></div><div class="tr">'+fm(x.amt)+' <button class="sm" onclick="edit(\'exp\','+x.id+')">'+t('edit')+'</button><button class="sm" onclick="del(\'exp\','+x.id+')">'+t('delete')+'</button></div></div>';
+  },'');
   return h+'</div>';
 }
 
@@ -1588,7 +1641,7 @@ function ntItem(n){
 function ntListHtml(){
   var L=(D.notes||[]).filter(function(x){return !(NT.compose&&NT.edit===x.id)});
   if(!L.length) return NT.compose?'':'<div class="nt-item"><div class="nt-empty">'+t('note_empty')+'</div></div>';
-  return L.map(ntItem).join('');
+  return monthGroups('notes',L,function(x){return x.d},function(a){return ''},ntItem,'');
 }
 function ntLiEd(it){
   return '<div class="nt-li"><span class="nt-ck'+(it.done?' on':'')+'" onclick="this.classList.toggle(\'on\')"></span><input class="nt-lin" placeholder="'+t('note_item_ph')+'" value="'+esc(it.t)+'" onkeydown="ntKey(event,this)"><button class="nt-rm" aria-label="Remove" onclick="ntRmRow(this)">✕</button></div>';
@@ -1672,7 +1725,7 @@ function ntSave(){
   if(NT.edit){
     var n=ntNote(NT.edit); id=n.id; n.title=rec.title;n.type=rec.type;n.txt=rec.txt;n.items=rec.items;
   } else {
-    id=Date.now(); rec.id=id; rec.d=today(); D.notes.unshift(rec);
+    id=Date.now(); rec.id=id; rec.d=today(); D.notes.unshift(rec); MO['notes|'+mKey(rec.d)]=true;
     if(window.sendToGoogleSheet&&window.formatNoteForSheet){window.sendToGoogleSheet('note',window.formatNoteForSheet(rec))}
   }
   NT.compose=false; NT.edit=null; NT.fresh=id;
@@ -2312,7 +2365,7 @@ v.classList.remove('sl');v.style.setProperty('--sx',dk?'0px':(d*70)+'px');v.styl
   codeModal.id = 'gs_modal';
   codeModal.style.cssText = 'position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.65);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:14px;';
 
-  var gasSource = "/**\n * ====================================================================\n * Khan Brothers Fashion - Google Sheets Automatic Realtime Sync Script\n * ====================================================================\n * এই স্ক্রিপ্টটি আপনার গুগল শিটে স্বয়ংক্রিয়ভাবে ৪টি ট্যাব তৈরি করবে:\n * ১. বিক্রি (Sales)\n * ২. উৎপাদন (Production)\n * ৩. খরচ (Expenses)\n * ৪. নোট (Notes)\n * \n * অ্যাপ থেকে কোনো এন্ট্রি ডিলিট করলেও গুগল শিটের ডাটা আজীবনের জন্য সুরক্ষিত থাকবে।\n */\n\n// >>> যদি শিট স্বয়ংক্রিয়ভাবে না পায়, তবে আপনার শিটের সম্পূর্ণ URL বা ID এখানে বসাতে পারেন (ঐচ্ছিক) <<<\nvar SPREADSHEET_ID = \"\"; // উদাহরণ: \"1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms\" অথবা সম্পূর্ণ শিটের লিংক\n\n// হেডারসমূহ\nvar HEADERS_SALE = ['এন্ট্রি আইডি (ID)', 'তারিখ (Date)', 'বিক্রির ধরন (Type)', 'কাস্টমার / দোকানদার', 'আইটেম বিবরণ', 'মোট পিস (Qty)', 'মোট টাকা (Total ৳)', 'নগদ / জমা (Paid ৳)', 'বাকি টাকা (Due ৳)', 'নোট / মন্তব্য', 'রেকর্ড সময় (Timestamp)'];\nvar HEADERS_PROD = ['এন্ট্রি আইডি (ID)', 'তারিখ (Date)', 'মোট কাপড় (কেজি)', 'ফেব্রিক ও রেট বিবরণ', 'কাপড়ের মোট খরচ (৳)', 'কালার বিবরণ', 'কাটিং বিবরণ ও রেট', 'কাটিং মোট মজুরি (৳)', 'সেলাই বিবরণ ও রেট', 'সেলাই মোট মজুরি (৳)', 'এক্সেসরিজ খরচ বিবরণ', 'এক্সেসরিজ মোট খরচ (৳)', 'মোট তৈরি পিস (Qty)', 'ব্যাচের সর্বমোট খরচ (৳)', 'কেজি প্রতি পিস', 'পিস প্রতি কাপড় (গ্রাম)', 'পিস প্রতি মোট খরচ (৳)', 'রেকর্ড সময় (Timestamp)'];\nvar HEADERS_EXP  = ['এন্ট্রি আইডি (ID)', 'তারিখ (Date)', 'খরচের খাত (Category)', 'টাকার পরিমাণ (Amount ৳)', 'রেকর্ড সময় (Timestamp)'];\nvar HEADERS_NOTE = ['নোট আইডি (ID)', 'তারিখ (Date)', 'নোটের শিরোনাম', 'ধরন (Type)', 'বিবরণ / চেকলিস্ট', 'রেকর্ড সময় (Timestamp)'];\n\n// গুগল শিট খোঁজার স্মার্ট ফাংশন\nfunction getSpreadsheet() {\n  if (SPREADSHEET_ID && SPREADSHEET_ID.trim() !== \"\") {\n    var raw = SPREADSHEET_ID.trim();\n    // সম্পূর্ণ URL পেস্ট করলেও স্বয়ংক্রিয়ভাবে ID বের করে নিবে\n    var match = raw.match(/\\/spreadsheets\\/d\\/([a-zA-Z0-9-_]+)/);\n    var id = match ? match[1] : raw;\n    try {\n      return SpreadsheetApp.openById(id);\n    } catch(err) {\n      Logger.log(\"openById error: \" + err);\n    }\n  }\n  try {\n    var active = SpreadsheetApp.getActiveSpreadsheet();\n    if (active) return active;\n  } catch(e) {}\n  return null;\n}\n\n/**\n * টেস্ট ফাংশন: কোড এডিটরে এটি সিলেক্ট করে 'Run' দিলে সাথে সাথে গুগল শিটে ৪টি ট্যাব তৈরি হবে।\n */\nfunction testConnection() {\n  var ss = getSpreadsheet();\n  if (!ss) {\n    throw new Error(\"❌ কোনো Google Spreadsheet পাওয়া যায়নি! অনুগ্রহ করে আপনার গুগল শিটের URL থেকে ID কপি করে কোডের উপরে var SPREADSHEET_ID = '...'; এর মধ্যে বসান।\");\n  }\n  Logger.log(\"✅ শিট কানেক্ট হয়েছে: \" + ss.getName());\n  getOrCreateSheet(ss, 'বিক্রি (Sales)', HEADERS_SALE, '#1e3a5f');\n  getOrCreateSheet(ss, 'উৎপাদন (Production)', HEADERS_PROD, '#0e4a3b');\n  getOrCreateSheet(ss, 'খরচ (Expenses)', HEADERS_EXP, '#7f1d1d');\n  getOrCreateSheet(ss, 'নোট (Notes)', HEADERS_NOTE, '#4a044e');\n  Logger.log(\"✅ সফল! গুগল শিটে ৪টি ট্যাব (Sales, Production, Expenses, Notes) তৈরি হয়ে গেছে। এখন শিটটি রিফ্রেশ দিয়ে দেখুন।\");\n}\n\nfunction doPost(e) {\n  try {\n    if (!e || !e.postData || !e.postData.contents) {\n      return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'No payload received' }))\n        .setMimeType(ContentService.MimeType.JSON);\n    }\n\n    var payload = JSON.parse(e.postData.contents);\n    var action = payload.action;\n    var data = payload.data || {};\n    var timestamp = payload.timestamp || Utilities.formatDate(new Date(), \"Asia/Dhaka\", \"dd/MM/yyyy hh:mm:ss a\");\n\n    var ss = getSpreadsheet();\n    if (!ss) {\n      throw new Error(\"Spreadsheet not found! Please set SPREADSHEET_ID in Code.gs with your Google Sheet ID or URL.\");\n    }\n\n    // নিশ্চিত করুন ৪টি ট্যাব শিটে বিদ্যমান আছে\n    getOrCreateSheet(ss, 'বিক্রি (Sales)', HEADERS_SALE, '#1e3a5f');\n    getOrCreateSheet(ss, 'উৎপাদন (Production)', HEADERS_PROD, '#0e4a3b');\n    getOrCreateSheet(ss, 'খরচ (Expenses)', HEADERS_EXP, '#7f1d1d');\n    getOrCreateSheet(ss, 'নোট (Notes)', HEADERS_NOTE, '#4a044e');\n\n    if (action === 'sale') {\n      logSale(ss, data, timestamp);\n    } else if (action === 'prod') {\n      logProd(ss, data, timestamp);\n    } else if (action === 'exp') {\n      logExp(ss, data, timestamp);\n    } else if (action === 'note') {\n      logNote(ss, data, timestamp);\n    } else if (action === 'sync_all') {\n      if (data.sales && data.sales.length) {\n        for (var i = 0; i < data.sales.length; i++) logSale(ss, data.sales[i], timestamp);\n      }\n      if (data.prod && data.prod.length) {\n        for (var j = 0; j < data.prod.length; j++) logProd(ss, data.prod[j], timestamp);\n      }\n      if (data.exp && data.exp.length) {\n        for (var k = 0; k < data.exp.length; k++) logExp(ss, data.exp[k], timestamp);\n      }\n      if (data.notes && data.notes.length) {\n        for (var m = 0; m < data.notes.length; m++) logNote(ss, data.notes[m], timestamp);\n      }\n    }\n\n    return ContentService.createTextOutput(JSON.stringify({ status: 'success', action: action }))\n      .setMimeType(ContentService.MimeType.JSON);\n\n  } catch (err) {\n    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: err.toString() }))\n      .setMimeType(ContentService.MimeType.JSON);\n  }\n}\n\nfunction getOrCreateSheet(ss, name, headers, headerColor) {\n  var sheet = ss.getSheetByName(name);\n  if (!sheet) {\n    sheet = ss.insertSheet(name);\n    sheet.appendRow(headers);\n    var headerRange = sheet.getRange(1, 1, 1, headers.length);\n    headerRange.setBackground(headerColor || '#141414');\n    headerRange.setFontColor('#ffffff');\n    headerRange.setFontWeight('bold');\n    headerRange.setHorizontalAlignment('center');\n    sheet.setFrozenRows(1);\n    for (var c = 1; c <= headers.length; c++) {\n      sheet.autoResizeColumn(c);\n    }\n  }\n  return sheet;\n}\n\nfunction logSale(ss, d, time) {\n  var sheet = getOrCreateSheet(ss, 'বিক্রি (Sales)', HEADERS_SALE, '#1e3a5f');\n  sheet.appendRow([\n    d.id || '',\n    d.date || '',\n    d.type || '',\n    d.customer || '',\n    d.items || '',\n    d.qty || 0,\n    d.total || 0,\n    d.paid || 0,\n    d.due || 0,\n    d.note || '',\n    time\n  ]);\n}\n\nfunction logProd(ss, d, time) {\n  var sheet = getOrCreateSheet(ss, 'উৎপাদন (Production)', HEADERS_PROD, '#0e4a3b');\n  sheet.appendRow([\n    d.id || '',\n    d.date || '',\n    d.total_kg || 0,\n    d.fabric_details || '',\n    d.fabric_cost || 0,\n    d.colors || '',\n    d.cuts || '',\n    d.cut_pay || 0,\n    d.sews || '',\n    d.sew_pay || 0,\n    d.extras || '',\n    d.extra_cost || 0,\n    d.pcs || 0,\n    d.total_cost || 0,\n    d.pcs_per_kg || 0,\n    d.fab_per_pc || 0,\n    d.cost_per_pc || 0,\n    time\n  ]);\n}\n\nfunction logExp(ss, d, time) {\n  var sheet = getOrCreateSheet(ss, 'খরচ (Expenses)', HEADERS_EXP, '#7f1d1d');\n  sheet.appendRow([\n    d.id || '',\n    d.date || '',\n    d.category || '',\n    d.amount || 0,\n    time\n  ]);\n}\n\nfunction logNote(ss, d, time) {\n  var sheet = getOrCreateSheet(ss, 'নোট (Notes)', HEADERS_NOTE, '#4a044e');\n  sheet.appendRow([\n    d.id || '',\n    d.date || '',\n    d.title || '',\n    d.type || '',\n    d.content || '',\n    time\n  ]);\n}\n\nfunction doGet(e) {\n  var ss = getSpreadsheet();\n  var info = ss ? (\"Connected to Sheet: \" + ss.getName()) : \"Spreadsheet not connected yet!\";\n  return ContentService.createTextOutput(\"Khan Brothers Fashion Sync Webhook Active!\\n\" + info)\n    .setMimeType(ContentService.MimeType.TEXT);\n}\n";
+  var gasSource = "/**\n * Khan Brothers Fashion - Google Sheets Sync (মাস অনুযায়ী সাজানো সংস্করণ)\n * প্রতিটি ট্যাবে (বিক্রি / উৎপাদন / খরচ / নোট) প্রতি মাসের জন্য আলাদা রঙিন ব্লক হয়:\n *   [মাসের নাম ব্যানার] → সেই মাসের এন্ট্রি → ফাঁকা লাইন → পরের মাস\n * টাকা = বোল্ড + রঙিন, পিস/কেজি = বোল্ড + নীল, বাকি টাকা = লাল (০ হলে সবুজ)।\n * অ্যাপে ডিলিট করলেও শিট থেকে কিছু মোছা হয় না। একই ID দুবার জমা হয় না।\n */\nvar SPREADSHEET_ID = \"\"; // ঐচ্ছিক: শিটের URL বা ID\n\nvar HEADERS_SALE = ['এন্ট্রি আইডি (ID)', 'তারিখ (Date)', 'বিক্রির ধরন (Type)', 'কাস্টমার / দোকানদার', 'আইটেম বিবরণ', 'মোট পিস (Qty)', 'মোট টাকা (Total ৳)', 'নগদ / জমা (Paid ৳)', 'বাকি টাকা (Due ৳)', 'নোট / মন্তব্য', 'রেকর্ড সময় (Timestamp)'];\nvar HEADERS_PROD = ['এন্ট্রি আইডি (ID)', 'তারিখ (Date)', 'মোট কাপড় (কেজি)', 'ফেব্রিক ও রেট বিবরণ', 'কাপড়ের মোট খরচ (৳)', 'কালার বিবরণ', 'কাটিং বিবরণ ও রেট', 'কাটিং মোট মজুরি (৳)', 'সেলাই বিবরণ ও রেট', 'সেলাই মোট মজুরি (৳)', 'এক্সেসরিজ খরচ বিবরণ', 'এক্সেসরিজ মোট খরচ (৳)', 'মোট তৈরি পিস (Qty)', 'ব্যাচের সর্বমোট খরচ (৳)', 'কেজি প্রতি পিস', 'পিস প্রতি কাপড় (গ্রাম)', 'পিস প্রতি মোট খরচ (৳)', 'রেকর্ড সময় (Timestamp)'];\nvar HEADERS_EXP = ['এন্ট্রি আইডি (ID)', 'তারিখ (Date)', 'খরচের খাত (Category)', 'টাকার পরিমাণ (Amount ৳)', 'রেকর্ড সময় (Timestamp)'];\nvar HEADERS_NOTE = ['নোট আইডি (ID)', 'তারিখ (Date)', 'নোটের শিরোনাম', 'ধরন (Type)', 'বিবরণ / চেকলিস্ট', 'রেকর্ড সময় (Timestamp)'];\n\nvar MONTHS_BN = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];\n// প্রতি মাসের [ব্যানারের রং, এন্ট্রির হালকা রং]\nvar TINTS = [['#1e3a5f', '#eaf1fb'], ['#0e4a3b', '#e8f5ef'], ['#7f1d1d', '#fdeeee'], ['#4a044e', '#f7ebf8'], ['#7c4a03', '#fdf3e3'], ['#134e4a', '#e6f6f4'],\n  ['#1e40af', '#e9eefc'], ['#6b21a8', '#f3eafc'], ['#9a3412', '#fdeee6'], ['#166534', '#eaf6ec'], ['#9f1239', '#fdebf0'], ['#3f3f46', '#f0f0f2']];\n\nfunction N(v) { var x = parseFloat(v); return isNaN(x) ? 0 : x; }\n\nvar TABS = {\n  sale: { name: 'বিক্রি (Sales)', h: HEADERS_SALE, hc: '#1e3a5f', mc: '#0b6b3a', money: [7, 8, 9], qty: [6], due: 9, wrap: [5, 10], w: { 3: 150, 4: 150, 5: 280, 10: 180 },\n    row: function (d, t) { return [d.id, d.date, d.type, d.customer, d.items, N(d.qty), N(d.total), N(d.paid), N(d.due), d.note, t]; } },\n  prod: { name: 'উৎপাদন (Production)', h: HEADERS_PROD, hc: '#0e4a3b', mc: '#0b6b3a', money: [5, 8, 10, 12, 14, 17], dec: [17], qty: [13], kg: [3, 15, 16], wrap: [4, 6, 7, 9, 11], w: { 4: 240, 6: 200, 7: 240, 9: 240, 11: 200 },\n    row: function (d, t) { return [d.id, d.date, N(d.total_kg), d.fabric_details, N(d.fabric_cost), d.colors, d.cuts, N(d.cut_pay), d.sews, N(d.sew_pay), d.extras, N(d.extra_cost), N(d.pcs), N(d.total_cost), N(d.pcs_per_kg), N(d.fab_per_pc), N(d.cost_per_pc), t]; } },\n  exp: { name: 'খরচ (Expenses)', h: HEADERS_EXP, hc: '#7f1d1d', mc: '#b91c1c', money: [4], w: { 3: 180, 4: 150 },\n    row: function (d, t) { return [d.id, d.date, d.category, N(d.amount), t]; } },\n  note: { name: 'নোট (Notes)', h: HEADERS_NOTE, hc: '#4a044e', wrap: [5], w: { 3: 200, 5: 360 },\n    row: function (d, t) { return [d.id, d.date, d.title, d.type, d.content, t]; } }\n};\n\nfunction getSpreadsheet() {\n  if (SPREADSHEET_ID && SPREADSHEET_ID.trim() !== \"\") {\n    var raw = SPREADSHEET_ID.trim(), m = raw.match(/\\/spreadsheets\\/d\\/([a-zA-Z0-9-_]+)/);\n    try { return SpreadsheetApp.openById(m ? m[1] : raw); } catch (err) { Logger.log(\"openById error: \" + err); }\n  }\n  try { var a = SpreadsheetApp.getActiveSpreadsheet(); if (a) return a; } catch (e) {}\n  return null;\n}\n\nfunction testConnection() {\n  var ss = getSpreadsheet();\n  if (!ss) throw new Error(\"❌ কোনো Google Spreadsheet পাওয়া যায়নি! SPREADSHEET_ID এর মধ্যে শিটের URL বসান।\");\n  Object.keys(TABS).forEach(function (k) { getOrCreateSheet(ss, TABS[k]); });\n  Logger.log(\"✅ সফল! ৪টি ট্যাব তৈরি হয়েছে: \" + ss.getName());\n}\n\nfunction getOrCreateSheet(ss, c) {\n  var sh = ss.getSheetByName(c.name);\n  if (sh) return sh;\n  sh = ss.insertSheet(c.name);\n  var nc = c.h.length;\n  sh.getRange(1, 1, 1, nc).setValues([c.h]).setBackground(c.hc).setFontColor('#ffffff').setFontWeight('bold').setHorizontalAlignment('center').setVerticalAlignment('middle').setWrap(true);\n  sh.setFrozenRows(1); sh.setRowHeight(1, 42);\n  for (var i = 1; i <= nc; i++) sh.setColumnWidth(i, (c.w && c.w[i]) || 115);\n  return sh;\n}\n\nfunction isBanner(v) { return /\\[\\d{4}-\\d{2}\\]\\s*$/.test(String(v)); }\n\nfunction scan(sh) {\n  var last = sh.getLastRow(), a = [], banners = [];\n  if (last > 0) a = sh.getRange(1, 1, last, 1).getValues().map(function (r) { return String(r[0]); });\n  a.forEach(function (v, i) { if (isBanner(v)) banners.push({ row: i + 1, key: v.match(/\\[(\\d{4}-\\d{2})\\]\\s*$/)[1] }); });\n  return { a: a, last: last, banners: banners };\n}\n\nfunction monthKey(d) {\n  var m = /(\\d{4})-(\\d{2})/.exec(d);\n  return m ? m[1] + '-' + m[2] : Utilities.formatDate(new Date(), \"Asia/Dhaka\", \"yyyy-MM\");\n}\n\nfunction bnDigits(s) { return String(s).replace(/\\d/g, function (d) { return '০১২৩৪৫৬৭৮৯'[d]; }); }\n\n// একটি মাসের এন্ট্রিগুলো সেই মাসের ব্লকের শেষে বসায় (ব্লক না থাকলে নতুন ব্যানার সহ বানায়)\nfunction putBlock(sh, c, key, rows) {\n  var n = rows.length, nc = c.h.length, sc = scan(sh), at = 0, r0, newBlock = false;\n  sc.banners.forEach(function (b) { if (b.key === key) at = b.row; });\n  if (at) {\n    var end = at;\n    while (end < sc.last && sc.a[end] !== '' && !isBanner(sc.a[end])) end++;\n    sh.insertRowsAfter(end, n); r0 = end + 1;\n  } else {\n    newBlock = true;\n    var nxt = sc.banners.filter(function (b) { return b.key > key; })[0];\n    if (nxt) { sh.insertRowsBefore(nxt.row, n + 2); at = nxt.row; }\n    else at = sc.last + (sc.last > 1 ? 2 : 1);\n    sh.getRange(at, 1, n + 2, nc).clearFormat();\n    var tint0 = TINTS[+key.slice(5) - 1];\n    sh.getRange(at, 1, 1, nc).setBackground(tint0[0]).setFontColor('#ffffff').setFontWeight('bold').setFontSize(12).setVerticalAlignment('middle');\n    sh.getRange(at, 1).setNumberFormat('@').setValue('📅 ' + MONTHS_BN[+key.slice(5) - 1] + ' ' + bnDigits(key.slice(0, 4)) + '   [' + key + ']');\n    sh.setRowHeight(at, 30); r0 = at + 1;\n  }\n  var tint = TINTS[+key.slice(5) - 1][1], rg = sh.getRange(r0, 1, n, nc);\n  rg.clearFormat();\n  sh.getRange(r0, 1, n, 2).setNumberFormat('@');\n  rg.setValues(rows).setBackground(tint).setFontColor('#222222').setVerticalAlignment('middle')\n    .setBorder(false, false, true, false, false, false, '#cfcfcf', SpreadsheetApp.BorderStyle.SOLID);\n  (c.wrap || []).forEach(function (col) { sh.getRange(r0, col, n, 1).setWrap(true); });\n  var style = function (cols, color, fmt, right) {\n    (cols || []).forEach(function (col) {\n      var f = fmt;\n      if (c.dec && c.dec.indexOf(col) >= 0 && fmt.indexOf('৳') > 0) f = '\"৳\"#,##0.00';\n      sh.getRange(r0, col, n, 1).setFontWeight('bold').setFontColor(color).setNumberFormat(f).setHorizontalAlignment('right');\n    });\n  };\n  style(c.money, c.mc, '\"৳\"#,##0');\n  style(c.qty, '#1d4ed8', '#,##0');\n  style(c.kg, '#1d4ed8', '#,##0.0#');\n  if (c.due) sh.getRange(r0, c.due, n, 1).setFontColors(rows.map(function (r) { return [N(r[c.due - 1]) > 0 ? '#c62828' : '#15803d']; }));\n}\n\n// replace=true: একই ID থাকলে পুরনো লাইন সরিয়ে নতুন করে বসায় (এডিট), false: যেগুলো আগে নেই শুধু সেগুলো যোগ করে\nfunction writeEntries(ss, type, list, time, replace) {\n  var c = TABS[type], sh = getOrCreateSheet(ss, c);\n  var today = Utilities.formatDate(new Date(), \"Asia/Dhaka\", \"yyyy-MM-dd\");\n  var rows = list.map(function (d) {\n    var r = c.row(d, time);\n    r[0] = String(r[0] || Utilities.getUuid().slice(0, 8));\n    r[1] = String(r[1] || today);\n    return r;\n  });\n  var ids = {}, sc = scan(sh);\n  sc.a.forEach(function (v, i) { if (i > 0 && v !== '' && !isBanner(v)) ids[v] = i + 1; });\n  if (replace) {\n    rows.map(function (r) { return ids[r[0]]; }).filter(Boolean).sort(function (a, b) { return b - a; }).forEach(function (n) { sh.deleteRow(n); });\n  } else {\n    rows = rows.filter(function (r) { return !ids[r[0]]; });\n  }\n  var g = {};\n  rows.forEach(function (r) { var k = monthKey(r[1]); (g[k] = g[k] || []).push(r); });\n  Object.keys(g).sort().forEach(function (k) {\n    g[k].sort(function (a, b) { return a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0; });\n    putBlock(sh, c, k, g[k]);\n  });\n}\n\nfunction doPost(e) {\n  var lock = LockService.getScriptLock();\n  try {\n    lock.waitLock(30000);\n    if (!e || !e.postData || !e.postData.contents) throw new Error('No payload received');\n    var p = JSON.parse(e.postData.contents), action = p.action, data = p.data || {};\n    var ts = p.timestamp || Utilities.formatDate(new Date(), \"Asia/Dhaka\", \"dd/MM/yyyy hh:mm:ss a\");\n    var ss = getSpreadsheet();\n    if (!ss) throw new Error(\"Spreadsheet not found! Please set SPREADSHEET_ID.\");\n    if (TABS[action]) writeEntries(ss, action, [data], ts, true);\n    else if (action === 'sync_all') {\n      writeEntries(ss, 'sale', data.sales || [], ts, false);\n      writeEntries(ss, 'prod', data.prod || [], ts, false);\n      writeEntries(ss, 'exp', data.exp || [], ts, false);\n      writeEntries(ss, 'note', data.notes || [], ts, false);\n    }\n    return ContentService.createTextOutput(JSON.stringify({ status: 'success', action: action })).setMimeType(ContentService.MimeType.JSON);\n  } catch (err) {\n    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: err.toString() })).setMimeType(ContentService.MimeType.JSON);\n  } finally {\n    try { lock.releaseLock(); } catch (x) {}\n  }\n}\n\nfunction doGet(e) {\n  var ss = getSpreadsheet();\n  return ContentService.createTextOutput(\"Khan Brothers Fashion Sync Webhook Active!\\n\" + (ss ? \"Connected to Sheet: \" + ss.getName() : \"Spreadsheet not connected yet!\")).setMimeType(ContentService.MimeType.TEXT);\n}\n";
 
   codeModal.innerHTML = '<div style="background:var(--bg1);color:var(--ink);border:1px solid var(--glb);border-radius:24px;padding:20px;max-width:540px;width:100%;max-height:85vh;display:flex;flex-direction:column;box-shadow:var(--sh);">'
     +'<h3 style="margin:0 0 8px;font-size:16px" id="gsm_t">Google Apps Script কোড ও সেটআপ</h3>'
