@@ -1065,7 +1065,7 @@ function setPg(i){sfx('tap'); pg=i; render()}
 function setVm(v){sfx('tap'); vm=v; render()}
 
 function nav(){
-  var items=[['home',t('nav_home')],['sales',t('nav_sales')],['prod',t('nav_prod')],['wage',t('nav_wage')],['exp',t('nav_exp')],['rep',t('nav_rep')]];
+  var items=[['home',t('nav_home')],['sales',t('nav_sales')],['prod',t('nav_prod')],['wage',t('nav_wage')],['exp',t('nav_exp')],['stock',t('nav_stock')],['list',t('nav_list')],['rep',t('nav_rep')]];
   $('nav').innerHTML=items.map(function(item){
     return '<button class="'+(tab==item[0]?'on':'')+'" onclick="go(\''+item[0]+'\')">'+ic(item[0])+'<span>'+item[1]+'</span></button>';
   }).join('');
@@ -1458,12 +1458,23 @@ function wage(){
     h+='<div class="row"><div>'+esc(w.name)+'<span class="tag">'+w.role+'</span></div><div style="text-align:right">'+fm(w.t)+(w.d>0?'<div class="mut bad">'+t('due_amt')+' '+fm(w.d)+'</div>':'<div class="mut good">'+t('all_paid')+'</div>')+'</div></div>';
   });
   
-  h+='</div><div class="card"><h2>'+t('wage_ledger')+'</h2>';
-  R.forEach(function(r){
-    h+='<div class="row"><div>'+esc(r.name)+'<span class="tag">'+r.role+'</span><div class="mut">'+r.d+(r.item?' · '+esc(r.item):'')+' · '+nb(r.q)+' '+t('pcs')+' × '+fm(r.rate)+'</div></div><div class="tr"><div style="text-align:right">'+fm(r.amt)+'<div class="mut '+(r.paid?'good':'bad')+'">'+(r.paid?t('paid'):t('due'))+'</div></div>'+chkBtn(r.paid,'togW('+r.id+',\''+r.kd+'\','+r.j+')')+'</div></div>';
-  });
-  return h+'</div>';
+  h+='</div>';
+  var b=LANG==='bn', LG={}, lots=[];
+  R.forEach(function(r){if(!LG[r.id]){LG[r.id]={id:r.id,d:r.d,a:[]};lots.push(LG[r.id])} LG[r.id].a.push(r)});
+  var one=function(r){return '<div class="row"><div>'+esc(r.name)+'<span class="tag">'+r.role+'</span><div class="mut">'+(r.item?esc(r.item)+' · ':'')+nb(r.q)+' '+t('pcs')+' × '+fm(r.rate)+'</div></div><div class="tr"><div style="text-align:right">'+fm(r.amt)+'<div class="mut '+(r.paid?'good':'bad')+'">'+(r.paid?t('paid'):t('due'))+'</div></div>'+chkBtn(r.paid,'togW('+r.id+',\''+r.kd+'\','+r.j+')')+'</div></div>'};
+  h+='<div class="card"><h2>'+t('wage_ledger')+'</h2>'+(lots.length?'':'<div class="empty">'+t('no_wages')+'</div>')+lots.map(function(Q,i){
+    var p=D.prod.filter(function(z){return z.id===Q.id})[0]||{}, tt=sum(Q.a,function(r){return r.amt}), dv=sum(Q.a.filter(function(r){return !r.paid}),function(r){return r.amt});
+    return lotBox('wl|'+Q.id,i,'📦 '+Q.d+' · '+nb(p.pcs||0)+' '+t('pcs'),fm(tt)+(dv>0?'<span class="mut bad">'+t('due_amt')+' '+fm(dv)+'</span>':'<span class="mut good">'+t('all_paid')+'</span>'),Q.a.map(one).join(''));
+  }).join('')+'</div>';
+  var xs=D.prod.filter(function(x){return x.extras&&x.extras.length}).reverse(), xt=sum(xs,function(x){return sum(x.extras,function(e){return e.a})});
+  h+='<div class="card"><div class="hd"><h2 style="margin:0">'+(b?'অতিরিক্ত খরচ খাতা':'Extra costs ledger')+'</h2><b>'+fm(xt)+'</b></div>'+(xs.length?'':'<div class="empty">'+(b?'কোনো অতিরিক্ত খরচ নেই':'No extra costs')+'</div>')+xs.map(function(x,i){
+    return lotBox('wx|'+x.id,i,'📦 '+x.d+' · '+nb(x.pcs)+' '+t('pcs'),fm(sum(x.extras,function(e){return e.a})),x.extras.map(function(e){return '<div class="row"><div>'+esc(e.n)+'</div><div class="tr"><b>'+fm(e.a)+'</b></div></div>'}).join(''));
+  }).join('')+'</div>';
+  return h;
 }
+
+function lotTog(id,el){sfx('tap');var g=el.parentNode,o=!g.classList.contains('open');MO[id]=o;g.classList.toggle('open',o)}
+function lotBox(id,i,title,sm,body){var o=id in MO?MO[id]:i===0;return '<div class="mg'+(o?' open':'')+'"><div class="mg-h" onclick="lotTog(\''+id+'\',this)"><div class="mg-t">'+title+'</div><div class="mg-s"><span>'+sm+'</span><span class="mg-c">'+ic('chev')+'</span></div></div><div class="mg-b">'+body+'</div></div>'}
 
 var RP={m:'week',o:0,by:'cust',who:''}, RPN=[];
 var WD_EN=['Su','Mo','Tu','We','Th','Fr','Sa'], WD_BN=['রবি','সোম','মঙ্গল','বুধ','বৃহ','শুক্র','শনি'];
@@ -1581,14 +1592,190 @@ function exp(){
 }
 
 function render(){
+  D.stock=D.stock||[];D.lists=D.lists||{};setDL();
   nav();
-  $('view').innerHTML={home:home,sales:sales,prod:prod,wage:wage,exp:exp,rep:rep}[tab]();
+  $('view').innerHTML=exBar()+{home:home,sales:sales,prod:prod,wage:wage,exp:exp,stock:stock,list:list,rep:rep}[tab]();
   if(ed){
     if(ed.fresh){ed.fresh=false; fillEd();}
     else ed=null;
   }
 }
 
+
+/* ===== JPG export ===== */
+function szc(){return 'display:inline-block;font-weight:600;color:#fff;padding:4px 14px;border-radius:999px;background:rgba(255,255,255,.1);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 4px 14px rgba(0,0,0,.25)'}
+function exBar(){
+  var b=LANG==='bn'; if(!{home:1,sales:1,prod:1,wage:1,exp:1,stock:1}[tab]) return '';
+  return '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-bottom:10px">'+(tab==='sales'?'<button class="sm" onclick="expJpg(\'due\')">📷 '+(b?'বাকির JPG':'Dues JPG')+'</button>':'')+'<button class="sm" onclick="expJpg()">📷 '+(b?'JPG সেভ':'Save JPG')+'</button></div>';
+}
+function expJpg(m){sfx('tap');jpgOut(expData(m||tab))}
+function expData(k){
+  var b=LANG==='bn', L=function(x,y){return b?x:y}, byD=function(a,f){return a.slice().sort(function(p,q){return f(p)<f(q)?1:f(p)>f(q)?-1:0})}, o={name:k,sum:[]};
+  if(k==='home'){
+    var sa=sum(D.sales,stot), rc=sum(D.sales,function(x){return x.paid}), pc=sum(D.prod,pcost), ex=sum(D.exp,function(x){return x.amt}), mk=sum(D.prod,function(x){return x.pcs}), sd=sum(D.sales,function(x){return x.qty}), wd=sum(wrows().filter(function(r){return !r.paid}),function(r){return r.amt}), pr=sa-pc-ex;
+    o.title=L('সারসংক্ষেপ','Summary'); o.cols=[[L('বিষয়','Item'),.6,'l'],[L('পরিমাণ','Amount'),.4,'r']];
+    o.rows=[[L('মোট বিক্রি','Total sales'),fm(sa)],[L('আদায়','Received'),fm(rc)],[L('বাকি (বিক্রি)','Sales due'),fm(sa-rc),'#c62828'],[L('উৎপাদন খরচ','Production cost'),fm(pc)],[L('অন্যান্য খরচ','Other expenses'),fm(ex)],[L('মজুরি বকেয়া','Wages due'),fm(wd),'#c62828'],[L('মোট তৈরি','Total made'),nb(mk)+' '+t('pcs')],[L('স্টকে (হিসাব)','In stock'),nb(mk-sd)+' '+t('pcs')]];
+    o.sum=[[pr>=0?L('মোট লাভ','Total profit'):L('মোট ক্ষতি','Total loss'),(pr<0?'−':'')+fm(Math.abs(pr))]];
+  } else if(k==='sales'||k==='due'){
+    var due=k==='due', A=D.sales.filter(function(x){return !due||stot(x)-x.paid>0});
+    o.title=due?L('বাকির তালিকা','Dues list'):L('বিক্রির তালিকা','Sales list');
+    A=due?A.slice().sort(function(p,q){return (p.name||'')<(q.name||'')?-1:1}):byD(A,function(x){return x.d});
+    o.cols=due?[[L('নাম','Name'),.38,'l'],[L('তারিখ','Date'),.2,'l'],[L('মোট','Total'),.21,'r'],[L('বাকি','Due'),.21,'r','#c62828']]:[[L('তারিখ','Date'),.17,'l'],[L('নাম','Name'),.3,'l'],[L('মোট','Total'),.18,'r'],[L('জমা','Paid'),.18,'r','#15803d'],[L('বাকি','Due'),.17,'r','#c62828']];
+    o.rows=A.map(function(x){var t0=stot(x),d=t0-x.paid;return due?[x.name||'—',x.d,fm(t0),fm(d)]:[x.d,x.name||'—',fm(t0),fm(x.paid),fm(d)]});
+    var T=sum(A,stot),P=sum(A,function(x){return x.paid});
+    o.sum=due?[[L('মোট বাকি','Total due'),fm(T-P)]]:[[L('মোট বিক্রি','Total sales'),fm(T)],[L('মোট জমা','Total received'),fm(P)],[L('মোট বাকি','Total due'),fm(T-P)]];
+  } else if(k==='prod'){
+    o.title=L('উৎপাদন তালিকা','Production list'); o.cols=[[L('তারিখ','Date'),.2,'l'],[L('পিস','Pcs'),.14,'r'],[L('কাপড় (কেজি)','Fabric kg'),.2,'r'],[L('মোট খরচ','Total cost'),.23,'r'],[L('পিস প্রতি','Per pc'),.23,'r']];
+    o.rows=byD(D.prod,function(x){return x.d}).map(function(x){return [x.d,nb(x.pcs),nb(fabKg(x)),fm(pcost(x)),fm(x.pcs>0?pcost(x)/x.pcs:0)]});
+    o.sum=[[L('মোট তৈরি','Total made'),nb(sum(D.prod,function(x){return x.pcs}))+' '+t('pcs')],[L('মোট খরচ','Total cost'),fm(sum(D.prod,pcost))]];
+  } else if(k==='wage'){
+    var R=wrows(), tw=sum(R,function(r){return r.amt}), pw=sum(R.filter(function(r){return r.paid}),function(r){return r.amt});
+    o.title=L('মজুরি খাতা','Wage ledger'); o.cols=[[L('তারিখ','Date'),.17,'l'],[L('নাম','Name'),.27,'l'],[L('আইটেম','Item'),.24,'l'],[L('টাকা','Amount'),.16,'r'],[L('অবস্থা','Status'),.16,'r']];
+    o.rows=R.map(function(r){return [r.d,r.name+' ('+r.role+')',r.item||'—',fm(r.amt),r.paid?t('paid'):t('due'),0]});
+    o.sum=[[L('মোট মজুরি','Total wages'),fm(tw)],[L('পরিশোধ','Paid'),fm(pw)],[L('বকেয়া','Due'),fm(tw-pw)]];
+  } else if(k==='exp'){
+    o.title=L('খরচের তালিকা','Expenses'); o.cols=[[L('তারিখ','Date'),.25,'l'],[L('খাত','Category'),.45,'l'],[L('টাকা','Amount'),.3,'r']];
+    o.rows=byD(D.exp,function(x){return x.d}).map(function(x){return [x.d,x.cat,fm(x.amt)]}); o.sum=[[L('মোট খরচ','Total'),fm(sum(D.exp,function(x){return x.amt}))]];
+  } else if(k==='stock'){
+    var S2=D.stock.filter(function(x){return (!SF.design||x.design===SF.design)&&(!SF.color||x.color===SF.color)&&(!SF.size||x.size===SF.size)}), G={};
+    S2.forEach(function(x){var kk=[x.design||'—',x.size||'—',x.color||'—'].join('\u0001');G[kk]=(G[kk]||0)+(x.type==='in'?x.q:-x.q)});
+    o.title=L('স্টকের হিসাব','Stock'); o.cols=[[L('ডিজাইন','Design'),.34,'l'],[L('সাইজ','Size'),.2,'l'],[L('কালার','Color'),.24,'l'],[L('পিস','Pcs'),.22,'r']];
+    o.rows=Object.keys(G).sort().map(function(kk){var p=kk.split('\u0001');return [p[0],p[1],p[2],nb(G[kk])]});
+    o.sum=[[L('মোট স্টক','In stock'),nb(sum(S2,function(x){return x.type==='in'?x.q:-x.q}))+' '+t('pcs')]];
+  }
+  return o;
+}
+function jpgOut(o){
+  var W=900,P=26,RH=50,TH=92, ff=getComputedStyle(document.body).fontFamily||'sans-serif', per=90, N=Math.max(1,Math.ceil(o.rows.length/per)), cvs=[], dt=today();
+  for(var p=0;p<N;p++){
+    var R=o.rows.slice(p*per,(p+1)*per), last=p===N-1, SH=last?(o.sum||[]).length*50+36:0, H=TH+RH+Math.max(1,R.length)*RH+SH+56;
+    var c=document.createElement('canvas'); c.width=W; c.height=H; var x=c.getContext('2d');
+    var fit=function(s,m){s=String(s);if(x.measureText(s).width<=m)return s;while(s.length>1&&x.measureText(s+'…').width>m)s=s.slice(0,-1);return s+'…'};
+    x.fillStyle='#fff';x.fillRect(0,0,W,H);
+    x.fillStyle='#14213d';x.fillRect(0,0,W,TH);
+    x.textBaseline='middle';x.fillStyle='#fff';x.textAlign='left';x.font='700 32px '+ff;x.fillText(o.title,P,38);
+    x.font='400 20px '+ff;x.fillStyle='#c9d3ea';x.fillText('Khan Brothers Fashion · '+dt+(N>1?'  ('+(p+1)+'/'+N+')':''),P,70);
+    var xs=[],cx=P,TW=W-2*P; o.cols.forEach(function(cl){xs.push(cx);cx+=cl[1]*TW});
+    x.fillStyle='#e5e9f2';x.fillRect(0,TH,W,RH);x.fillStyle='#14213d';x.font='700 21px '+ff;
+    o.cols.forEach(function(cl,i){var w=cl[1]*TW-12;x.textAlign=cl[2]==='r'?'right':'left';x.fillText(fit(cl[0],w),cl[2]==='r'?xs[i]+cl[1]*TW-12:xs[i],TH+RH/2)});
+    if(!R.length){x.textAlign='left';x.fillStyle='#888';x.font='400 21px '+ff;x.fillText('—',P,TH+RH+RH/2)}
+    R.forEach(function(r,j){
+      var y=TH+RH+j*RH; x.fillStyle=j%2?'#f4f6fb':'#fff';x.fillRect(0,y,W,RH);
+      x.fillStyle='#d9deea';x.fillRect(0,y+RH-1,W,1);
+      o.cols.forEach(function(cl,i){
+        var w=cl[1]*TW-12, v=String(r[i]), col=cl[3]||'#1b1f2a';
+        if(r[i]===undefined)return;
+        if(k0(o)==='wage'&&i===4)col=v===t('paid')?'#15803d':'#c62828';
+        if(r[2]&&r[r.length-1]&&typeof r[r.length-1]==='string'&&r.length>cl.length&&0)col=r[r.length-1];
+        if(typeof r[o.cols.length]==='string')col=(i===1&&o.name==='home')?col:col;
+        x.fillStyle=(o.name==='home'&&i===1&&typeof r[2]==='string')?r[2]:col;
+        x.font=(cl[2]==='r'?'700 ':'400 ')+'21px '+ff;x.textAlign=cl[2]==='r'?'right':'left';
+        x.fillText(fit(v,w),cl[2]==='r'?xs[i]+cl[1]*TW-12:xs[i],y+RH/2);
+      });
+    });
+    if(last&&o.sum&&o.sum.length){
+      var y0=TH+RH+Math.max(1,R.length)*RH+18; x.fillStyle='#14213d';x.fillRect(P,y0,W-2*P,2);
+      o.sum.forEach(function(s,i){var y=y0+8+i*50+25;x.font='700 24px '+ff;x.fillStyle='#14213d';x.textAlign='left';x.fillText(s[0],P,y);x.textAlign='right';x.fillText(s[1],W-P,y)});
+    }
+    cvs.push(c);
+  }
+  jpgSave(cvs,'khan-'+o.name+'-'+dt);
+}
+function k0(o){return o.name}
+function jpgSave(cvs,name){
+  var dl=function(fs){fs.forEach(function(f,i){setTimeout(function(){var a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;document.body.appendChild(a);a.click();a.remove()},i*400)})};
+  Promise.all(cvs.map(function(c,i){return new Promise(function(r){c.toBlob(function(b){r(new File([b],name+(cvs.length>1?'_'+(i+1):'')+'.jpg',{type:'image/jpeg'}))},'image/jpeg',.92)})})).then(function(fs){
+    if(navigator.canShare&&navigator.canShare({files:fs})) navigator.share({files:fs,title:name}).catch(function(e){if(e&&e.name!=='AbortError')dl(fs)});
+    else dl(fs);
+  });
+}
+
+/* ===== Saved lists, Stock tab, pick-lists ===== */
+Object.assign(TX.bn,{nav_stock:'স্টক',nav_list:'তালিকা'});
+Object.assign(TX.en,{nav_stock:'Stock',nav_list:'Lists'});
+P.stock='M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8';
+P.list='M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01';
+var SF={design:'',color:'',size:''};
+function stF(k,v){SF[k]=v;sfx('tap');render()}
+var LS_DEF=[['fab',1],['cut',1],['sew',1],['item',0],['size',0],['color',0]], SV='design';
+function LT(k){var m={fab:['কাপড়ের নাম ও রেট (প্রতি কেজি)','Fabrics & rate per kg'],cut:['কাটিং মাস্টার ও রেট (প্রতি পিস)','Cutting masters & rate per piece'],sew:['সেলাই কারিগর ও রেট (প্রতি পিস)','Sewing workers & rate per piece'],item:['আইটেম / ডিজাইন','Items / designs'],size:['সাইজ','Sizes'],color:['কালার','Colors']};return m[k][LANG==='bn'?0:1]}
+function lst(k){D.lists=D.lists||{};return D.lists[k]||(D.lists[k]=[])}
+function SLB(s){var b=LANG==='bn';return s==='full'?(b?'ফুল হাতা':'Full sleeve'):s==='half'?(b?'হাফ হাতা':'Half sleeve'):''}
+function wlbl(x){return (x.it||'')+(x.sl?(x.it?' · ':'')+SLB(x.sl):'')}
+function setDL(){
+  var e=$('dls');if(!e){e=document.createElement('div');e.id='dls';e.hidden=true;document.body.appendChild(e)}
+  var L=function(id,a){return '<datalist id="'+id+'">'+a.filter(function(v,i){return v&&a.indexOf(v)===i}).map(function(v){return '<option value="'+esc(v)+'">'}).join('')+'</datalist>'}, nm=function(k){return lst(k).map(function(x){return x.n})}, it=nm('item');
+  e.innerHTML=L('dl_fab',nm('fab'))+L('dl_cut',nm('cut'))+L('dl_sew',nm('sew'))+L('dl_item',it)+L('dl_size',nm('size'))+L('dl_color',nm('color'))+L('dl_cut_it',lst('cut').map(wlbl).concat(it))+L('dl_sew_it',lst('sew').map(wlbl).concat(it));
+}
+function attachDL(){[['#cul .wn','dl_cut'],['#cul .wi','dl_cut_it'],['#sel .wn','dl_sew'],['#sel .wi','dl_sew_it'],['#fbl .fbn','dl_fab']].forEach(function(p){document.querySelectorAll(p[0]).forEach(function(i){if(i.getAttribute('list')!==p[1])i.setAttribute('list',p[1])})})}
+document.addEventListener('input',function(e){
+  var i=e.target,c=i.closest&&i.closest('#cul,#sel,#fbl'); if(!c)return;
+  var cl=i.className, row=i.parentNode;
+  if(/\b(wt|fbr)\b/.test(cl)){delete i.dataset.auto;return}
+  var k=c.id==='cul'?'cut':c.id==='sel'?'sew':'fab', A=lst(k);
+  var set=function(inp,v){if(inp&&(!(parseFloat(inp.value)>0)||inp.dataset.auto)){inp.value=v;inp.dataset.auto='1';gP()}};
+  if(k==='fab'){if(/\bfbn\b/.test(cl)){var f=A.filter(function(x){return x.n===i.value})[0];if(f&&f.r)set(row.querySelector('input.fbr'),f.r)}return}
+  var nm=row.querySelector('.wn'), it=row.querySelector('.wi'), rt=row.querySelector('.wt');
+  if(/\bwn\b/.test(cl)){
+    var m=A.filter(function(x){return x.n===i.value});
+    if(m.length===1){if(!it.value.trim()&&wlbl(m[0]))it.value=wlbl(m[0]);if(m[0].r)set(rt,m[0].r)}
+  } else if(/\bwi\b/.test(cl)){
+    var m2=A.filter(function(x){return wlbl(x)===i.value}), f2=m2.filter(function(x){return x.n===nm.value})[0];
+    if(!f2&&m2.length===1&&!nm.value.trim()){f2=m2[0];nm.value=f2.n}
+    if(f2&&f2.r)set(rt,f2.r);
+  }
+});
+new MutationObserver(attachDL).observe($('view'),{childList:true,subtree:true});
+function lstAdd(k){
+  var nm=$('ln_'+k).value.trim(); if(!nm)return;
+  var r=$('lr_'+k), rate=r?parseFloat(r.value)||0:0, w=(k==='cut'||k==='sew');
+  var it=w?$('li_'+k).value.trim():'', sl=w?$('ls_'+k).value:'', a=lst(k);
+  var f=a.filter(function(x){return x.n.toLowerCase()===nm.toLowerCase()&&(x.it||'')===it&&(x.sl||'')===sl})[0];
+  if(f){if(rate)f.r=rate}else a.push(w?{n:nm,it:it,sl:sl,r:rate}:{n:nm,r:rate});
+  save();sfx('save');render();
+}
+function lstDel(k,i){if(!confirm(LANG==='bn'?'মুছে ফেলবেন?':'Delete?'))return;lst(k).splice(i,1);save();sfx('del');render()}
+function list(){
+  var b=LANG==='bn';
+  return '<div class="mut" style="margin-bottom:10px">'+(b?'এখানে একবার লিখে রাখুন। উৎপাদনে নামের ঘরে ট্যাপ করলে এখান থেকে বেছে নিতে পারবেন, রেটও নিজে বসে যাবে। কারিগর/মাস্টারের জন্য আইটেম ও হাতা (ফুল/হাফ) আলাদা রেট দেওয়া যায়।':'Save names once. Pick them in Production; rates fill in automatically. For workers you can set a different rate per item and sleeve (full/half).')+'</div>'
+  +LS_DEF.map(function(d){
+    var k=d[0],hr=d[1],w=(k==='cut'||k==='sew');
+    return '<div class="card"><h2>'+LT(k)+'</h2>'+(lst(k).map(function(x,i){return '<div class="row"><div>'+esc(x.n)+(w&&x.it?'<span class="tag">'+esc(x.it)+'</span>':'')+(w&&x.sl?'<span class="tag">'+SLB(x.sl)+'</span>':'')+(hr&&x.r?'<span class="tag">'+fm(x.r)+'</span>':'')+'</div><button class="sm" onclick="lstDel(\''+k+'\','+i+')">'+t('delete')+'</button></div>'}).join('')||'<div class="empty">—</div>')
+     +'<div class="f" style="margin-top:10px"><div><input id="ln_'+k+'" list="dl_'+k+'" placeholder="'+(b?'নাম':'Name')+'"></div>'
+     +(w?'<div><input id="li_'+k+'" list="dl_item" placeholder="'+(b?'কাপড় / ডিজাইন (আইটেম)':'Cloth / design (item)')+'"></div><div><select id="ls_'+k+'"><option value="">'+(b?'হাতা: সব/প্রযোজ্য নয়':'Sleeve: any / n.a.')+'</option><option value="full">'+SLB('full')+'</option><option value="half">'+SLB('half')+'</option></select></div>':'')
+     +(hr?'<div><input id="lr_'+k+'" type="number" inputmode="decimal" placeholder="'+(b?'রেট (৳)':'Rate (৳)')+'"></div>':'')+'</div><button class="btn" onclick="lstAdd(\''+k+'\')">'+(b?'+ যোগ করুন':'+ Add')+'</button></div>';
+  }).join('');
+}
+function stSet(v){sfx('tap');SV=v;render()}
+function stDel(id){D.stock=D.stock.filter(function(x){return x.id!==id});save();sfx('del');render()}
+function stAdd(){
+  var q=n('k_q'); if(q<=0){msg(LANG==='bn'?'পরিমাণ লিখুন':'Enter quantity');return}
+  var d=$('k_d').value||today();
+  D.stock.push({id:Date.now(),d:d,type:$('k_t').value,design:$('k_i').value.trim(),color:$('k_c').value.trim(),size:$('k_s').value.trim(),q:q,note:$('k_n').value.trim()});
+  MO['stock|'+mKey(d)]=true;save();sfx('save');render();
+}
+function stock(){
+  var b=LANG==='bn', S=D.stock, L=function(x,y){return b?x:y};
+  var h='<div class="card"><h2>'+L('স্টক এন্ট্রি','Stock entry')+'</h2><div class="f"><div><label>'+t('date')+'</label><input type="date" id="k_d" value="'+today()+'"></div><div><label>'+L('ধরন','Type')+'</label><select id="k_t"><option value="in">'+L('+ স্টকে জমা','+ Stock in')+'</option><option value="out">'+L('− স্টক থেকে বাদ','− Stock out')+'</option></select></div><div><label>'+L('ডিজাইন / আইটেম','Design / item')+'</label><input id="k_i" list="dl_item"></div><div><label>'+L('কালার','Color')+'</label><input id="k_c" list="dl_color"></div><div><label>'+L('সাইজ','Size')+'</label><input id="k_s" list="dl_size"></div><div><label>'+L('পিস','Pieces')+'</label><input id="k_q" type="number" inputmode="numeric"></div><div><label>'+L('নোট','Note')+'</label><input id="k_n"></div></div><button class="btn" onclick="stAdd()">'+L('সংরক্ষণ করুন','Save')+'</button><span class="err" id="err"></span></div>';
+  var fl={design:L('ডিজাইন','Design'),color:L('কালার','Color'),size:L('সাইজ','Size')};
+  var opts=function(k){var a=[];S.forEach(function(x){if(x[k]&&a.indexOf(x[k])<0)a.push(x[k])});return a.sort()};
+  Object.keys(fl).forEach(function(k){if(SF[k]&&opts(k).indexOf(SF[k])<0)SF[k]=''});
+  h+='<div class="card"><h2>'+L('ফিল্টার','Filter')+'</h2><div class="f">'+Object.keys(fl).map(function(k){
+    return '<div><label>'+fl[k]+'</label><select onchange="stF(\''+k+'\',this.value)"><option value="">'+L('সব','All')+'</option>'+opts(k).map(function(v){return '<option value="'+esc(v)+'"'+(SF[k]===v?' selected':'')+'>'+esc(v)+'</option>'}).join('')+'</select></div>'}).join('')+'</div></div>';
+  var S2=S.filter(function(x){return (!SF.design||x.design===SF.design)&&(!SF.color||x.color===SF.color)&&(!SF.size||x.size===SF.size)});
+  var ti=sum(S2,function(x){return x.type==='in'?x.q:0}), to=sum(S2,function(x){return x.type==='out'?x.q:0});
+  h+='<div class="g3">'+[[L('মোট জমা','Total in'),ti],[L('মোট বাদ','Total out'),to],[L('বর্তমান স্টক','In stock'),ti-to]].map(function(a){return '<div class="card"><div class="mut">'+a[0]+'</div><div class="num">'+nb(a[1])+' '+t('pcs')+'</div></div>'}).join('')+'</div>';
+  var g={}, so=lst('size').map(function(x){return x.n}), sgn=function(x){return x.type==='in'?x.q:-x.q};
+  S2.forEach(function(x){var G=g[x.design||'—']=g[x.design||'—']||{t:0,s:{}}, Z=G.s[x.size||'—']=G.s[x.size||'—']||{t:0,c:{}}, c=x.color||'—';G.t+=sgn(x);Z.t+=sgn(x);Z.c[c]=(Z.c[c]||0)+sgn(x)});
+  var ord=function(a,c){var i=so.indexOf(a),j=so.indexOf(c);i=i<0?999:i;j=j<0?999:j;return i-j||(a<c?-1:a>c?1:0)};
+  var ks=Object.keys(g).sort();
+  h+='<div class="card"><h2>'+L('ডিজাইন ও সাইজ অনুযায়ী স্টক','Stock by design & size')+'</h2>'+(ks.length?'':'<div class="empty">'+L('কোনো স্টক নেই','No stock')+'</div>')
+   +ks.map(function(k){var G=g[k];return '<div class="mg open"><div class="mg-h" onclick="this.parentNode.classList.toggle(\'open\')"><div class="mg-t">'+esc(k)+'</div><div class="mg-s"><span class="'+(G.t>0?'good':'bad')+'">'+nb(G.t)+' '+t('pcs')+'</span><span class="mg-c">'+ic('chev')+'</span></div></div><div class="mg-b">'
+     +Object.keys(G.s).sort(ord).map(function(z){var Z=G.s[z];return '<div class="row"><div><span style="'+szc()+'">'+L('সাইজ ','Size ')+'<b style="color:#ff7a1a;font-size:1.08em">'+esc(z)+'</b></span><div class="mut" style="margin-top:5px">'+Object.keys(Z.c).sort().map(function(c){return esc(c)+' '+nb(Z.c[c])}).join(' · ')+'</div></div><div class="tr"><b class="'+(Z.t>0?'good':'bad')+'">'+nb(Z.t)+' '+t('pcs')+'</b></div></div>'}).join('')+'</div></div>'}).join('')+'</div>';
+  h+='<div class="card"><h2>'+L('স্টক ইতিহাস','Stock history')+'</h2>'+monthGroups('stock',S2.slice().reverse(),function(x){return x.d},function(a){return nb(sum(a,sgn))+' '+t('pcs')},function(x){
+    return '<div class="row"><div>'+esc(x.design||'—')+' · '+esc(x.color||'—')+' · '+esc(x.size||'—')+'<div class="mut">'+x.d+(x.note?' · '+esc(x.note):'')+'</div></div><div class="tr"><b class="'+(x.type==='in'?'good':'bad')+'">'+(x.type==='in'?'+':'−')+nb(x.q)+'</b><button class="sm" onclick="stDel('+x.id+')">'+t('delete')+'</button></div></div>'},'')+'</div>';
+  return h;
+}
 
 /* ========================================================
    NOTES (home page widget) + PIECES-PER-KG / COST-PER-PIECE
@@ -1888,7 +2075,7 @@ function closeCalc(){
 })();
 
 /* Directional page transition: content slides in from the side of the tab that was tapped */
-var TORD=['home','sales','prod','wage','exp','rep'],SDIR=0,_go=go,_rd=render;
+var TORD=['home','sales','prod','wage','exp','stock','list','rep'],SDIR=0,_go=go,_rd=render;
 go=function(t){var a=TORD.indexOf(tab),b=TORD.indexOf(t);SDIR=b>a?1:(b<a?-1:0);_go(t)};
 render=function(){_rd();var d=SDIR;SDIR=0;if(!d)return;var v=$('view'),dk=window.matchMedia&&window.matchMedia('(min-width:820px)').matches;
 v.classList.remove('sl');v.style.setProperty('--sx',dk?'0px':(d*70)+'px');v.style.setProperty('--sy',dk?(d*50)+'px':'0px');void v.offsetWidth;v.classList.add('sl')};
@@ -1911,7 +2098,7 @@ v.classList.remove('sl');v.style.setProperty('--sx',dk?'0px':(d*70)+'px');v.styl
     var tx=db.transaction(ST,'readwrite'); tx.objectStore(ST).put(v,KEY);
     tx.oncomplete=res; tx.onerror=function(){rej(tx.error)};
   })})}
-  function hasData(d){return d&&((d.sales||[]).length||(d.prod||[]).length||(d.exp||[]).length||(d.notes||[]).length)}
+  function hasData(d){return d&&((d.sales||[]).length||(d.prod||[]).length||(d.exp||[]).length||(d.notes||[]).length||(d.stock||[]).length)}
   window._idbPut=idbPut;
 
   // save(): localStorage (instant) + IndexedDB (backup copy) with timestamp
@@ -1974,7 +2161,7 @@ v.classList.remove('sl');v.style.setProperty('--sx',dk?'0px':(d*70)+'px');v.styl
         var j=JSON.parse(r.result), d=j.data||j;
         if(!d||!Array.isArray(d.sales)||!Array.isArray(d.prod)||!Array.isArray(d.exp)) throw 0;
         if(!confirm(LANG==='bn'?'বর্তমান ডেটা মুছে ব্যাকআপ ফাইলের ডেটা বসানো হবে। ঠিক আছে?':'This replaces current data with the backup. Continue?')) return;
-        D={sales:d.sales,prod:d.prod,exp:d.exp,notes:d.notes||[]}; save(); render(); w.classList.remove('on');
+        D={sales:d.sales,prod:d.prod,exp:d.exp,notes:d.notes||[],stock:d.stock||[],lists:d.lists||{}}; save(); render(); w.classList.remove('on');
         flash(LANG==='bn'?'রিস্টোর সম্পন্ন ✓':'Restore complete ✓');
       }catch(e){alert(LANG==='bn'?'ফাইলটি সঠিক ব্যাকআপ নয়':'Not a valid backup file')}
     };
@@ -2003,7 +2190,7 @@ v.classList.remove('sl');v.style.setProperty('--sx',dk?'0px':(d*70)+'px');v.styl
   }
   function num(k){try{return +localStorage.getItem(k)||0}catch(e){return 0}}
   function setK(k,v){try{localStorage.setItem(k,v)}catch(e){}}
-  function hasData(d){return d&&((d.sales||[]).length||(d.prod||[]).length||(d.exp||[]).length||(d.notes||[]).length)}
+  function hasData(d){return d&&((d.sales||[]).length||(d.prod||[]).length||(d.exp||[]).length||(d.notes||[]).length||(d.stock||[]).length)}
   function flash(m){var t=$('toast');if(!t)return;t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2200)}
 
   // ---- UI inside the Backup panel ----
@@ -2054,7 +2241,7 @@ v.classList.remove('sl');v.style.setProperty('--sx',dk?'0px':(d*70)+'px');v.styl
         useCloud=confirm(bn()?'এই ফোন ও ক্লাউড দুই জায়গাতেই নতুন পরিবর্তন আছে।\nOK = ক্লাউডের ডেটা নিন (এই ফোনের নতুন পরিবর্তন বাদ)\nCancel = এই ফোনের ডেটা রাখুন (ক্লাউড ওভাররাইট হবে)':'Both this device and the cloud have new changes.\nOK = use cloud data (lose local changes)\nCancel = keep this device (overwrite cloud)');
       } else useCloud=remoteChanged;
       if(useCloud){
-        var d=r.data.data||{}; D={sales:d.sales||[],prod:d.prod||[],exp:d.exp||[],notes:d.notes||[]};
+        var d=r.data.data||{}; D={sales:d.sales||[],prod:d.prod||[],exp:d.exp||[],notes:d.notes||[],stock:d.stock||[],lists:d.lists||{}};
         setK(K,JSON.stringify(D)); setK(TK,rt); setK(SK,rt);
         if(window._idbPut) window._idbPut({t:rt,data:D}).catch(function(){});
         render(); status((bn()?'ক্লাউড থেকে আপডেট ✓ ':'Updated from cloud ✓ ')+new Date().toLocaleTimeString());
@@ -2126,7 +2313,7 @@ v.classList.remove('sl');v.style.setProperty('--sx',dk?'0px':(d*70)+'px');v.styl
       pos.side=(f.offsetLeft+S/2<innerWidth/2)?'l':'r';
       pos.y=f.offsetTop; apply();
       try{localStorage.setItem('khan_fab',JSON.stringify(pos))}catch(_){}
-    } else if(e.type==='pointerup'){ openCalc(); }
+    } else if(e.type==='pointerup'){ var tn=Date.now(); if(tn-(f._t||0)<450){f._t=0;openCalc()} else f._t=tn; }
   }
   f.addEventListener('pointerup',end); f.addEventListener('pointercancel',end);
   f.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openCalc()}});
