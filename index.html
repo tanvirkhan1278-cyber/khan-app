@@ -485,6 +485,22 @@ nav button{gap:4px}
   .pl{display:none}
 }
 
+/* Bottom nav: compact (Home..Wages) by default; tap the arrow to expand both sides */
+nav .tg{display:none}
+@media(max-width:819px){
+  nav{overflow:hidden;width:calc(100vw - 20px);transition:width .4s cubic-bezier(.2,.9,.25,1)}
+  nav.mini{width:min(330px,calc(100vw - 20px))}
+  nav .tg{display:flex;flex:0 0 38px;min-width:38px;padding:8px 0;align-items:center;justify-content:center}
+  nav .tg svg.ic{width:20px;height:20px;transform:rotate(90deg);transition:transform .4s}
+  nav.mini .tg svg.ic{transform:rotate(-90deg)}
+  nav button.x{transition:flex .4s cubic-bezier(.2,.9,.25,1),opacity .25s,padding .4s}
+  nav.mini button.x{flex:0 0 0;min-width:0;padding:8px 0;opacity:0;pointer-events:none;overflow:hidden}
+}
+
+/* JPG buttons: minimal camera icon */
+.xb{display:inline-flex;align-items:center;gap:6px}
+.xb svg.ic{width:18px;height:18px;stroke-width:1.6}
+
 /* Draggable floating calculator (Messenger-style chat head) */
 .fab{position:fixed;left:0;top:0;z-index:6;width:54px;height:54px;border-radius:50%;border:1px solid rgba(255,255,255,.5);
   color:#fff;cursor:grab;display:flex;align-items:center;justify-content:center;padding:0;
@@ -1064,11 +1080,14 @@ function fillEd(){
 function setPg(i){sfx('tap'); pg=i; render()}
 function setVm(v){sfx('tap'); vm=v; render()}
 
+var navMini=true;
+function navTog(){sfx('tap');navMini=!navMini;$('nav').classList.toggle('mini',navMini)}
 function nav(){
   var items=[['home',t('nav_home')],['sales',t('nav_sales')],['prod',t('nav_prod')],['wage',t('nav_wage')],['exp',t('nav_exp')],['stock',t('nav_stock')],['list',t('nav_list')],['rep',t('nav_rep')]];
-  $('nav').innerHTML=items.map(function(item){
-    return '<button class="'+(tab==item[0]?'on':'')+'" onclick="go(\''+item[0]+'\')">'+ic(item[0])+'<span>'+item[1]+'</span></button>';
-  }).join('');
+  $('nav').classList.toggle('mini',navMini);
+  $('nav').innerHTML=items.map(function(item,i){
+    return '<button class="'+(tab==item[0]?'on':'')+(i>3?' x':'')+'" onclick="go(\''+item[0]+'\')">'+ic(item[0])+'<span>'+item[1]+'</span></button>';
+  }).join('')+'<button class="tg" aria-label="More" onclick="navTog()">'+ic('chev')+'</button>';
   updateLangSwitchUI();
   updateSoundUI();
 }
@@ -1606,7 +1625,7 @@ function render(){
 function szc(){return 'display:inline-block;font-weight:600;color:#fff;padding:4px 14px;border-radius:999px;background:rgba(255,255,255,.1);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 4px 14px rgba(0,0,0,.25)'}
 function exBar(){
   var b=LANG==='bn'; if(!{home:1,sales:1,prod:1,wage:1,exp:1,stock:1}[tab]) return '';
-  return '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-bottom:10px">'+(tab==='sales'?'<button class="sm" onclick="expJpg(\'due\')">📷 '+(b?'বাকির JPG':'Dues JPG')+'</button>':'')+'<button class="sm" onclick="expJpg()">📷 '+(b?'JPG সেভ':'Save JPG')+'</button></div>';
+  return '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-bottom:10px">'+(tab==='sales'?'<button class="sm xb" onclick="expJpg(\'due\')">'+ic('camera')+' '+(b?'বাকির JPG':'Dues JPG')+'</button>':'')+'<button class="sm xb" onclick="expJpg()">'+ic('camera')+' '+(b?'JPG সেভ':'Save JPG')+'</button></div>';
 }
 function expJpg(m){sfx('tap');jpgOut(expData(m||tab))}
 function expData(k){
@@ -1639,7 +1658,8 @@ function expData(k){
   } else if(k==='stock'){
     var S2=D.stock.filter(function(x){return (!SF.design||x.design===SF.design)&&(!SF.color||x.color===SF.color)&&(!SF.size||x.size===SF.size)}), G={};
     S2.forEach(function(x){var kk=[x.design||'—',x.size||'—',x.color||'—'].join('\u0001');G[kk]=(G[kk]||0)+(x.type==='in'?x.q:-x.q)});
-    o.title=L('স্টকের হিসাব','Stock'); o.cols=[[L('ডিজাইন','Design'),.34,'l'],[L('সাইজ','Size'),.2,'l'],[L('কালার','Color'),.24,'l'],[L('পিস','Pcs'),.22,'r']];
+    o.title=L('স্টকের হিসাব','Stock');
+    o.sub=['design','size','color'].filter(function(f){return SF[f]}).map(function(f){return (f==='design'?L('ডিজাইন','Design'):f==='size'?L('সাইজ','Size'):L('কালার','Color'))+': '+SF[f]}).join(' · '); o.cols=[[L('ডিজাইন','Design'),.34,'l'],[L('সাইজ','Size'),.2,'l'],[L('কালার','Color'),.24,'l'],[L('পিস','Pcs'),.22,'r']];
     o.rows=Object.keys(G).sort().map(function(kk){var p=kk.split('\u0001');return [p[0],p[1],p[2],nb(G[kk])]});
     o.sum=[[L('মোট স্টক','In stock'),nb(sum(S2,function(x){return x.type==='in'?x.q:-x.q}))+' '+t('pcs')]];
   }
@@ -1654,7 +1674,7 @@ function jpgOut(o){
     x.fillStyle='#fff';x.fillRect(0,0,W,H);
     x.fillStyle='#14213d';x.fillRect(0,0,W,TH);
     x.textBaseline='middle';x.fillStyle='#fff';x.textAlign='left';x.font='700 32px '+ff;x.fillText(o.title,P,38);
-    x.font='400 20px '+ff;x.fillStyle='#c9d3ea';x.fillText('Khan Brothers Fashion · '+dt+(N>1?'  ('+(p+1)+'/'+N+')':''),P,70);
+    x.font='400 20px '+ff;x.fillStyle='#c9d3ea';x.fillText('Khan Brothers Fashion · '+dt+(N>1?'  ('+(p+1)+'/'+N+')':'')+(o.sub?'  |  '+o.sub:''),P,70,W-2*P);
     var xs=[],cx=P,TW=W-2*P; o.cols.forEach(function(cl){xs.push(cx);cx+=cl[1]*TW});
     x.fillStyle='#e5e9f2';x.fillRect(0,TH,W,RH);x.fillStyle='#14213d';x.font='700 21px '+ff;
     o.cols.forEach(function(cl,i){var w=cl[1]*TW-12;x.textAlign=cl[2]==='r'?'right':'left';x.fillText(fit(cl[0],w),cl[2]==='r'?xs[i]+cl[1]*TW-12:xs[i],TH+RH/2)});
@@ -1798,6 +1818,7 @@ P.trash='M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13';
 Object.assign(TX.bn,{note_head_ph:'শিরোনাম (হেডিং)', note_m_text:'টেক্সট', note_m_list:'চেকলিস্ট', note_item_ph:'আইটেম লিখুন', note_add_item:'+ আইটেম', note_untitled:'নোট'});
 Object.assign(TX.en,{note_head_ph:'Heading', note_m_text:'Text', note_m_list:'Checklist', note_item_ph:'Item', note_add_item:'+ Item', note_untitled:'Note'});
 P.chev='M6 9l6 6 6-6';
+P.camera='M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1zM12 10.5a3.4 3.4 0 100 6.8 3.4 3.4 0 000-6.8z';
 var NT={open:false,compose:false,edit:null,mode:'text',exp:{},fresh:0};
 function ntDate(s){
   var p=(s||today()).split('-'), mn=LANG==='bn'?MN_BN:MN_EN;
@@ -2297,25 +2318,28 @@ v.classList.remove('sl');v.style.setProperty('--sx',dk?'0px':(d*70)+'px');v.styl
   }
   f.addEventListener('pointerdown',function(e){
     drag={dx:e.clientX-f.offsetLeft,dy:e.clientY-f.offsetTop,x0:e.clientX,y0:e.clientY,moved:false};
+    f._lp=false; clearTimeout(f._lt);
+    f._lt=setTimeout(function(){ if(drag&&!drag.moved){ f._lp=true; if(navigator.vibrate)try{navigator.vibrate(12)}catch(_){} openCalc(); } },450);
     try{f.setPointerCapture(e.pointerId)}catch(_){}
   });
   f.addEventListener('pointermove',function(e){
     if(!drag) return;
     if(!drag.moved && Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0)<6) return;
-    drag.moved=true; f.classList.add('drag');
+    clearTimeout(f._lt); drag.moved=true; f.classList.add('drag');
     f.style.left=Math.max(0,Math.min(innerWidth-S,e.clientX-drag.dx))+'px';
     f.style.top=clampY(e.clientY-drag.dy)+'px';
   });
   function end(e){
     if(!drag) return;
+    clearTimeout(f._lt);
     var d=drag; drag=null; f.classList.remove('drag');
     if(d.moved){
       pos.side=(f.offsetLeft+S/2<innerWidth/2)?'l':'r';
       pos.y=f.offsetTop; apply();
       try{localStorage.setItem('khan_fab',JSON.stringify(pos))}catch(_){}
-    } else if(e.type==='pointerup'){ var tn=Date.now(); if(tn-(f._t||0)<450){f._t=0;openCalc()} else f._t=tn; }
+    } else if(e.type==='pointerup'){ if(!f._lp) openCalc(); }
   }
-  f.addEventListener('pointerup',end); f.addEventListener('pointercancel',end);
+  f.addEventListener('pointerup',end); f.addEventListener('pointercancel',end); f.addEventListener('contextmenu',function(e){e.preventDefault()});
   f.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openCalc()}});
   addEventListener('resize',apply); apply();
 })();
