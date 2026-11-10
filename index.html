@@ -596,6 +596,9 @@ nav button{gap:4px}
 .nt-lt{flex:1;color:#c9c9cd;font-size:14px;line-height:1.5;overflow-wrap:anywhere;transition:color .2s}
 .nt-item .nt-li{cursor:pointer}
 .nt-li.done .nt-lt{text-decoration:line-through;color:#6d6d73}
+.nt-qty{flex:none;width:92px;border:0;border-bottom:1px solid rgba(255,255,255,.18);border-radius:0;background:transparent;color:#ffcf8a;caret-color:#ffa733;font:inherit;font-size:16px;font-weight:600;text-align:right;padding:4px 2px;outline:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+.nt-qty:focus{box-shadow:none;border-color:rgba(255,167,51,.7)}.nt-qty::placeholder{color:#6f6f74;font-weight:400}
+.nt-sz .nt-lin{flex:1;font-weight:600}.nt-lq{flex:none;color:#ffcf8a;font-weight:700;font-size:14px}
 .nt-rm{flex:none;border:0;background:transparent;color:#77777c;cursor:pointer;font-size:15px;padding:4px 6px}
 .nt-add{margin:4px 0 8px;border:1px dashed rgba(255,255,255,.2);background:transparent;color:#a9a9ad;border-radius:12px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
 .nt-act{display:flex;justify-content:flex-end;gap:10px}
@@ -2120,6 +2123,8 @@ P.trash='M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13';
 /* ---- Notes v2 ---- */
 Object.assign(TX.bn,{note_head_ph:'শিরোনাম (হেডিং)', note_m_text:'টেক্সট', note_m_list:'চেকলিস্ট', note_item_ph:'আইটেম লিখুন', note_add_item:'+ আইটেম', note_untitled:'নোট'});
 Object.assign(TX.en,{note_head_ph:'Heading', note_m_text:'Text', note_m_list:'Checklist', note_item_ph:'Item', note_add_item:'+ Item', note_untitled:'Note'});
+Object.assign(TX.bn,{note_m_size:'সাইজ', note_design_ph:'ডিজাইনের নাম', note_pcs_ph:'পিস', note_size_ph:'সাইজ', note_add_size:'+ সাইজ', note_size_list:'সাইজ তালিকা'});
+Object.assign(TX.en,{note_m_size:'Size', note_design_ph:'Design name', note_pcs_ph:'Pcs', note_size_ph:'Size', note_add_size:'+ Size', note_size_list:'Size list'});
 P.chev='M6 9l6 6 6-6';
 P.camera='M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1zM12 10.5a3.4 3.4 0 100 6.8 3.4 3.4 0 000-6.8z';
 var NT={open:false,compose:false,edit:null,mode:'text',exp:{},fresh:0};
@@ -2128,18 +2133,18 @@ function ntDate(s){
   return ('0'+(+p[2])).slice(-2)+' '+mn[(+p[1])-1];
 }
 function ntNote(id){return (D.notes||[]).filter(function(x){return x.id===id})[0]}
-function ntType(n){return n.type==='list'?'list':'text'}
+function ntType(n){return n.type==='list'||n.type==='size'?n.type:'text'}
 function ntHead(n){
   var h=(n.title||'').trim();
   if(!h) h=ntType(n)==='list'?((n.items&&n.items[0]&&n.items[0].t)||''):String(n.txt||'').split('\n')[0];
-  return h||t('note_untitled');
+  return h||(ntType(n)==='size'?t('note_size_list'):t('note_untitled'));
 }
-function ntProg(n){var it=n.items||[];return sum(it,function(x){return x.done?1:0})+'/'+it.length}
+function ntProg(n){var it=n.items||[];if(n.type==='size')return nb(sum(it,function(x){return +x.q||0}))+' '+t('pcs');return sum(it,function(x){return x.done?1:0})+'/'+it.length}
 function ntLi(it,i,id){
-  return '<div class="nt-li'+(it.done?' done':'')+'" id="ntl_'+id+'_'+i+'" onclick="ntChk('+id+','+i+')"><span class="nt-ck'+(it.done?' on':'')+'"></span><span class="nt-lt">'+esc(it.t)+'</span></div>';
+  return '<div class="nt-li'+(it.done?' done':'')+'" id="ntl_'+id+'_'+i+'" onclick="ntChk('+id+','+i+')"><span class="nt-ck'+(it.done?' on':'')+'"></span><span class="nt-lt">'+esc(it.t)+'</span>'+(it.q?'<b class="nt-lq">'+nb(it.q)+' '+t('pcs')+'</b>':'')+'</div>';
 }
 function ntItem(n){
-  var list=ntType(n)==='list', on=!!NT.exp[n.id];
+  var list=ntType(n)==='list'||ntType(n)==='size', on=!!NT.exp[n.id];
   var body=list?(n.items||[]).map(function(it,i){return ntLi(it,i,n.id)}).join('')+'<div style="height:6px"></div>':'<div class="nt-tx">'+esc(n.txt)+'</div>';
   return '<div class="nt-item'+(on?' on':'')+(NT.fresh===n.id?' ani':'')+'" id="nti_'+n.id+'">'
    +'<div class="nt-row" onclick="ntExp('+n.id+')"><div class="nt-hh"><div class="nt-dt"><i></i>'+ntDate(n.d)+'</div><div class="nt-ti2">'+esc(ntHead(n))+'</div></div>'
@@ -2157,12 +2162,27 @@ function ntListHtml(){
 function ntLiEd(it){
   return '<div class="nt-li"><span class="nt-ck'+(it.done?' on':'')+'" onclick="this.classList.toggle(\'on\')"></span><input class="nt-lin" placeholder="'+t('note_item_ph')+'" value="'+esc(it.t)+'" onkeydown="ntKey(event,this)"><button class="nt-rm" aria-label="Remove" onclick="ntRmRow(this)">✕</button></div>';
 }
+function ntSizes(){var a=lst('size').map(function(x){return x.n}).filter(Boolean);return a.length?a:['S','M','L','XL','XXL','3XL']}
+function ntSzRows(items){
+  var by={}, out=[];
+  (items||[]).forEach(function(it){by[it.t]=it});
+  ntSizes().forEach(function(z){var it=by[z];out.push({t:z,q:it?it.q:'',done:it?it.done:false});delete by[z]});
+  (items||[]).forEach(function(it){if(by[it.t]===it)out.push({t:it.t,q:it.q,done:it.done})});
+  return out;
+}
+function ntSzEd(it){
+  return '<div class="nt-li nt-sz" data-done="'+(it.done?1:0)+'"><input class="nt-lin" placeholder="'+t('note_size_ph')+'" value="'+esc(it.t)+'" onkeydown="ntKey(event,this)"><input class="nt-qty" type="number" inputmode="numeric" min="0" placeholder="'+t('note_pcs_ph')+'" value="'+esc(it.q||'')+'" onkeydown="ntQKey(event,this)"><button class="nt-rm" aria-label="Remove" onclick="ntRmRow(this)">✕</button></div>';
+}
+function ntQKey(e,el){
+  if(e.key==='Enter'){e.preventDefault();var n=el.parentNode.nextElementSibling;if(n){var q=n.querySelector('.nt-qty');if(q)q.focus()}else el.blur()}
+}
 function ntCompHtml(dr,anim){
   var m=dr.mode;
   var h='<div class="nt-box'+(anim?' ani':'')+'" id="nt_box"><div class="nt-top"><div class="nt-dt"><i></i>'+ntDate(dr.d)+'</div>'
-   +'<div class="nt-sg"><button class="'+(m==='text'?'on':'')+'" onclick="ntMode(\'text\')">'+t('note_m_text')+'</button><button class="'+(m==='list'?'on':'')+'" onclick="ntMode(\'list\')">'+t('note_m_list')+'</button></div></div>'
-   +'<input id="nt_t" class="nt-ti" placeholder="'+t('note_head_ph')+'" value="'+esc(dr.title)+'">';
+   +'<div class="nt-sg"><button class="'+(m==='text'?'on':'')+'" onclick="ntMode(\'text\')">'+t('note_m_text')+'</button><button class="'+(m==='list'?'on':'')+'" onclick="ntMode(\'list\')">'+t('note_m_list')+'</button><button class="'+(m==='size'?'on':'')+'" onclick="ntMode(\'size\')">'+t('note_m_size')+'</button></div></div>'
+   +'<input id="nt_t" class="nt-ti" placeholder="'+(m==='size'?t('note_design_ph'):t('note_head_ph'))+'" value="'+esc(dr.title)+'">';
   if(m==='text') h+='<textarea id="nt_in" class="nt-in" rows="3" placeholder="'+t('note_ph')+'" oninput="ntGrow(this)">'+esc(dr.txt)+'</textarea>';
+  else if(m==='size') h+='<div id="nt_li">'+ntSzRows(dr.items).map(ntSzEd).join('')+'</div><button class="nt-add" onclick="ntAddRow()">'+t('note_add_size')+'</button>';
   else h+='<div id="nt_li">'+(dr.items.length?dr.items:[{t:'',done:false}]).map(ntLiEd).join('')+'</div><button class="nt-add" onclick="ntAddRow()">'+t('note_add_item')+'</button>';
   return h+'<div class="nt-act"><button class="nt-b ok" aria-label="Save" onclick="ntSave()">'+ic('chk')+'</button><button class="nt-b" aria-label="Cancel" onclick="ntCancel()">'+ic('x')+'</button></div></div>';
 }
@@ -2196,6 +2216,7 @@ function ntRead(){
   var ti=$('nt_t'), ta=$('nt_in'), items=[];
   document.querySelectorAll('#nt_li .nt-li').forEach(function(r){
     var v=r.querySelector('.nt-lin').value.trim();
+    if(NT.mode==='size'){var qe=r.querySelector('.nt-qty'), q=qe?(parseFloat(qe.value)||0):0; if(v&&q>0)items.push({t:v,q:q,done:r.getAttribute('data-done')==='1'}); return}
     if(v) items.push({t:v,done:r.querySelector('.nt-ck').classList.contains('on')});
   });
   return {title:ti?ti.value.trim():'',txt:ta?ta.value.replace(/\s+$/,''):'',items:items,mode:NT.mode};
@@ -2204,6 +2225,8 @@ function ntMode(m){
   if(NT.mode===m) return;
   sfx('tap');
   var d=ntRead(), n=NT.edit?ntNote(NT.edit):null;
+  if(NT.mode==='size') d.items=d.items.map(function(i){return {t:i.t+' – '+nb(i.q)+' '+t('pcs'),done:i.done}});
+  if(m==='size') d.items=[];
   if(m==='list'&&!d.items.length&&d.txt) d.items=d.txt.split('\n').map(function(x){return x.trim()}).filter(Boolean).map(function(x){return {t:x,done:false}});
   if(m==='text'&&!d.txt&&d.items.length) d.txt=d.items.map(function(i){return i.t}).join('\n');
   NT.mode=m; d.mode=m; d.d=n?n.d:today();
@@ -2212,13 +2235,13 @@ function ntMode(m){
 }
 function ntAddRow(after){
   var c=$('nt_li'); if(!c) return;
-  var html=ntLiEd({t:'',done:false});
+  var html=NT.mode==='size'?ntSzEd({t:'',q:'',done:false}):ntLiEd({t:'',done:false});
   if(after&&after.insertAdjacentHTML){after.insertAdjacentHTML('afterend',html); after=after.nextElementSibling}
   else {c.insertAdjacentHTML('beforeend',html); after=c.lastElementChild}
   sfx('tap'); after.querySelector('.nt-lin').focus();
 }
 function ntKey(e,el){
-  if(e.key==='Enter'){e.preventDefault();ntAddRow(el.parentNode)}
+  if(e.key==='Enter'){e.preventDefault();if(NT.mode==='size'){var qq=el.parentNode.querySelector('.nt-qty');if(qq)qq.focus()}else ntAddRow(el.parentNode)}
   else if(e.key==='Backspace'&&!el.value){
     var r=el.parentNode, p=r.previousElementSibling;
     if(p){e.preventDefault();r.parentNode.removeChild(r);p.querySelector('.nt-lin').focus()}
@@ -2232,7 +2255,7 @@ function ntSave(){
   var d=ntRead();
   if(!(d.title||(NT.mode==='text'?d.txt:d.items.length))){var f=$('nt_t'); if(f) f.focus(); return}
   D.notes=D.notes||[];
-  var rec={title:d.title,type:NT.mode,txt:NT.mode==='text'?d.txt:'',items:NT.mode==='list'?d.items:[]}, id;
+  var rec={title:d.title,type:NT.mode,txt:NT.mode==='text'?d.txt:'',items:NT.mode!=='text'?d.items:[]}, id;
   if(NT.edit){
     var n=ntNote(NT.edit); id=n.id; n.title=rec.title;n.type=rec.type;n.txt=rec.txt;n.items=rec.items;
     if(window.sendToGoogleSheet&&window.formatNoteForSheet){window.sendToGoogleSheet('note',window.formatNoteForSheet(n))}
@@ -2776,14 +2799,16 @@ v.classList.remove('sl');v.style.setProperty('--sx',dk?'0px':(d*70)+'px');v.styl
   };
 
   window.formatNoteForSheet = function(n){
-    var content = n.type === 'list'
+    var content = n.type === 'size'
+      ? (n.items || []).map(function(i){ return i.t + ': ' + i.q; }).join('; ')
+      : n.type === 'list'
       ? (n.items || []).map(function(i){ return (i.done ? '[✓] ' : '[ ] ') + i.t; }).join('; ')
       : (n.txt || '');
     return {
       id: n.id,
       date: n.d || today(),
       title: n.title || (LANG==='bn'?'নোট':'Note'),
-      type: n.type === 'list' ? (LANG==='bn'?'চেকলিস্ট':'Checklist') : (LANG==='bn'?'টেক্সট':'Text'),
+      type: n.type === 'size' ? (LANG==='bn'?'সাইজ':'Size') : n.type === 'list' ? (LANG==='bn'?'চেকলিস্ট':'Checklist') : (LANG==='bn'?'টেক্সট':'Text'),
       content: content
     };
   };
