@@ -954,6 +954,71 @@ function wrows(){
   return r.reverse();
 }
 
+/* ===== Wage tab filter (name / status / week / month / date range) — also drives the Wage JPG ===== */
+var WF={who:'',st:'all',pr:'all',mon:'',a:'',b:''};
+function wfRange(){
+  var T=new Date();T.setHours(12,0,0,0);
+  var back=function(n){var d=new Date(T);d.setDate(d.getDate()-n);return ds(d)};
+  var mr=function(y,m){return {a:ds(new Date(y,m,1,12)),b:ds(new Date(y,m+1,0,12))}};
+  if(WF.pr==='w0')return {a:back(6),b:back(0)};
+  if(WF.pr==='w1')return {a:back(13),b:back(7)};
+  if(WF.pr==='m0')return mr(T.getFullYear(),T.getMonth());
+  if(WF.pr==='m1')return mr(T.getFullYear(),T.getMonth()-1);
+  if(WF.pr==='pm'&&/^\d{4}-\d{2}$/.test(WF.mon)){var q=WF.mon.split('-');return mr(+q[0],+q[1]-1)}
+  if(WF.pr==='cr'&&(WF.a||WF.b))return {a:WF.a||'0000-00-00',b:WF.b||'9999-99-99'};
+  return null;
+}
+function wrowsF(){
+  var g=wfRange();
+  return wrows().filter(function(r){
+    if(WF.who&&r.name!==WF.who)return false;
+    if(WF.st==='due'&&r.paid)return false;
+    if(WF.st==='paid'&&!r.paid)return false;
+    if(g&&(r.d<g.a||r.d>g.b))return false;
+    return true;
+  });
+}
+function wfOn(){return !!(WF.who||WF.st!=='all'||wfRange())}
+function wfDesc(){
+  if(!wfOn())return '';
+  var b=LANG==='bn', a=[];
+  if(WF.who)a.push((b?'নাম: ':'Name: ')+WF.who);
+  if(WF.st==='due')a.push(b?'বকেয়া':'Unpaid');
+  if(WF.st==='paid')a.push(b?'পরিশোধিত':'Paid');
+  var g=wfRange();
+  if(g){
+    var L={w0:b?'এই সপ্তাহ (গত ৭ দিন)':'This week (last 7 days)',w1:b?'আগের সপ্তাহ':'Previous week',m0:b?'এই মাস':'This month',m1:b?'গত মাস':'Last month'}[WF.pr];
+    if(WF.pr==='pm'){var q=WF.mon.split('-');L=(b?MN_BN:MN_EN)[+q[1]-1]+' '+q[0]}
+    if(WF.pr==='cr')L=(WF.a||'…')+' → '+(WF.b||'…');
+    a.push(L);
+  }
+  return a.join(' · ');
+}
+function wfSet(k,v){
+  sfx('tap'); WF[k]=v;
+  if(k==='pr'&&v==='pm'&&!WF.mon){var d=new Date();WF.mon=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)}
+  render();
+}
+function wfReset(){sfx('tap'); WF={who:'',st:'all',pr:'all',mon:'',a:'',b:''}; render()}
+function wfBar(){
+  var b=LANG==='bn', L=function(x,y){return b?x:y}, names=[];
+  wrows().forEach(function(r){if(names.indexOf(r.name)<0)names.push(r.name)});
+  names.sort();
+  if(WF.who&&names.indexOf(WF.who)<0)WF.who='';
+  var sts=[['all',L('সব','All')],['due',L('বকেয়া','Unpaid')],['paid',L('পরিশোধিত','Paid')]];
+  var prs=[['all',L('সব সময়','All time')],['w0',L('এই সপ্তাহ (গত ৭ দিন)','This week (last 7 days)')],['w1',L('আগের সপ্তাহ','Previous week')],['m0',L('এই মাস','This month')],['m1',L('গত মাস','Last month')],['pm',L('নির্দিষ্ট মাস বাছুন','Pick a month')],['cr',L('তারিখ থেকে – পর্যন্ত','Date range')]];
+  var h='<div class="card"><h2>'+L('ফিল্টার','Filter')+'</h2>'
+   +'<div class="seg" style="margin-bottom:10px;width:max-content;max-width:100%">'+sts.map(function(a){return '<button class="'+(WF.st===a[0]?'on':'')+'" onclick="wfSet(\'st\',\''+a[0]+'\')">'+a[1]+'</button>'}).join('')+'</div>'
+   +'<div class="f"><div><label>'+L('নাম','Name')+'</label><select onchange="wfSet(\'who\',this.value)"><option value="">'+L('সবাই','Everyone')+'</option>'+names.map(function(n){return '<option value="'+esc(n)+'"'+(WF.who===n?' selected':'')+'>'+esc(n)+'</option>'}).join('')+'</select></div>'
+   +'<div><label>'+L('সময়','Period')+'</label><select onchange="wfSet(\'pr\',this.value)">'+prs.map(function(a){return '<option value="'+a[0]+'"'+(WF.pr===a[0]?' selected':'')+'>'+a[1]+'</option>'}).join('')+'</select></div>'
+   +(WF.pr==='pm'?'<div><label>'+L('মাস','Month')+'</label><input type="month" value="'+esc(WF.mon)+'" onchange="wfSet(\'mon\',this.value)"></div>':'')
+   +(WF.pr==='cr'?'<div><label>'+L('শুরুর তারিখ','From')+'</label><input type="date" value="'+esc(WF.a)+'" onchange="wfSet(\'a\',this.value)"></div><div><label>'+L('শেষ তারিখ','To')+'</label><input type="date" value="'+esc(WF.b)+'" onchange="wfSet(\'b\',this.value)"></div>':'')
+   +'</div>';
+  if(wfOn())h+='<div class="mut" style="margin-bottom:8px">'+L('দেখানো হচ্ছে: ','Showing: ')+'<b>'+esc(wfDesc())+'</b> · '+L('উপরের “JPG সেভ” চাপলে শুধু এই ফিল্টার করা তালিকাই ছবি হয়ে শেয়ার হবে।','“Save JPG” above will export only this filtered list.')+'</div><button class="sm" onclick="wfReset()">'+L('ফিল্টার মুছুন','Clear filter')+'</button>';
+  else h+='<div class="mut">'+L('কোনো ফিল্টার নেই — “JPG সেভ” চাপলে সব ডেটা শেয়ার হবে।','No filter — “Save JPG” will export everything.')+'</div>';
+  return h+'</div>';
+}
+
 function togW(id,kd,j){
   if(busy)return;
   sfx('toggle');
@@ -1696,14 +1761,14 @@ function prod(){
 }
 
 function wage(){
-  var R=wrows(), tot=sum(R,function(r){return r.amt}), pd=sum(R,function(r){return r.pd}), W={};
+  var R=wrowsF(), tot=sum(R,function(r){return r.amt}), pd=sum(R,function(r){return r.pd}), W={};
   R.forEach(function(r){
     var k=r.name+'|'+r.role;
     W[k]=W[k]||{name:r.name,role:r.role,t:0,d:0,p:0};
     W[k].t+=r.amt;
     W[k].d+=r.rem;W[k].p+=r.pd;
   });
-  var h='<div class="g3" style="margin-top:0"><div class="card"><div class="mut">'+t('total_wages')+'</div><div class="num">'+fm(tot)+'</div></div><div class="card"><div class="mut">'+t('paid')+'</div><div class="num good">'+fm(pd)+'</div></div><div class="card"><div class="mut">'+t('due')+'</div><div class="num '+(tot-pd>0?'bad':'')+'">'+fm(tot-pd)+'</div></div></div><div class="card"><h2>'+t('by_worker')+'</h2>';
+  var h=wfBar()+'<div class="g3" style="margin-top:0"><div class="card"><div class="mut">'+t('total_wages')+'</div><div class="num">'+fm(tot)+'</div></div><div class="card"><div class="mut">'+t('paid')+'</div><div class="num good">'+fm(pd)+'</div></div><div class="card"><div class="mut">'+t('due')+'</div><div class="num '+(tot-pd>0?'bad':'')+'">'+fm(tot-pd)+'</div></div></div><div class="card"><h2>'+t('by_worker')+'</h2>';
   
   var ks=Object.keys(W);
   if(!ks.length) h+='<div class="empty">'+t('no_wages')+'</div>';
@@ -1883,8 +1948,8 @@ function expData(k){
     o.rows=byD(D.prod,function(x){return x.d}).map(function(x){return [x.d,nb(x.pcs),nb(fabKg(x)),fm(pcost(x)),fm(x.pcs>0?pcost(x)/x.pcs:0)]});
     o.sum=[[L('মোট তৈরি','Total made'),nb(sum(D.prod,function(x){return x.pcs}))+' '+t('pcs')],[L('মোট খরচ','Total cost'),fm(sum(D.prod,pcost))]];
   } else if(k==='wage'){
-    var R=wrows(), tw=sum(R,function(r){return r.amt}), pw=sum(R,function(r){return r.pd});
-    o.title=L('মজুরি খাতা','Wage ledger'); o.cols=[[L('তারিখ','Date'),.17,'l'],[L('নাম','Name'),.27,'l'],[L('আইটেম','Item'),.24,'l'],[L('টাকা','Amount'),.16,'r'],[L('অবস্থা','Status'),.16,'r']];
+    var R=wrowsF(), tw=sum(R,function(r){return r.amt}), pw=sum(R,function(r){return r.pd});
+    o.title=L('মজুরি খাতা','Wage ledger'); var wfd=wfDesc(); if(wfd){o.sub=wfd; if(WF.st==='due')o.title=L('মজুরি বকেয়া তালিকা','Wages due list')} o.cols=[[L('তারিখ','Date'),.17,'l'],[L('নাম','Name'),.27,'l'],[L('আইটেম','Item'),.24,'l'],[L('টাকা','Amount'),.16,'r'],[L('অবস্থা','Status'),.16,'r']];
     o.rows=R.map(function(r){return [r.d,r.name+' ('+r.role+')',r.item||'—',fm(r.amt),r.rem<=0?t('paid'):(r.pd>0?t('due')+' '+fm(r.rem):t('due')),0]});
     o.sum=[[L('মোট মজুরি','Total wages'),fm(tw)],[L('পরিশোধ','Paid'),fm(pw)],[L('বকেয়া','Due'),fm(tw-pw)]];
   } else if(k==='exp'){
