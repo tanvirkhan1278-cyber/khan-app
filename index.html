@@ -637,6 +637,19 @@ nav button{gap:4px}
 .mg.open .mg-b{display:block}
 .mg-b>.row:first-child{border-top:0}
 .mg-b.lg{padding-bottom:14px;padding-top:12px}
+
+/* compact sales rows */
+.srow{flex-wrap:wrap;align-items:flex-start}
+.srow>.sl{flex:1 1 260px;min-width:0;overflow-wrap:anywhere}
+.srow>.tr{flex:0 1 auto;max-width:100%}
+.itot{margin:6px 0 4px;font-size:14px}.itot b{color:#ff7a1a}
+.ichips{display:flex;flex-wrap:wrap;gap:5px 6px}
+.ichip{display:inline-block;font-size:12.5px;line-height:1.35;padding:3px 9px;border-radius:10px;background:var(--soft);border:1px solid var(--line);color:var(--mut)}
+.ichip.ig{display:block}.ichip .iv{display:flex;flex-wrap:wrap;gap:2px 10px;margin-top:2px}.ichip .iv i{font-style:normal}
+@media(max-width:560px){
+  .srow>.sl{flex:1 1 100%}
+  .srow>.tr{flex:1 1 100%;justify-content:space-between;border-top:1px dashed var(--line);padding-top:8px}
+}
 </style>
 </head>
 <body>
@@ -1072,6 +1085,20 @@ function stockIx(skipSid){
   return ix;
 }
 function stockFind(ix,n,sz,cl,sy){
+  var r=stockFind0(ix,n,sz,cl,sy);if(r)return r;
+  /* same design/color/size but saved with a different sleeve/chain tag -> still the same item */
+  if(!nk(n)||!(sz||cl))return null;
+  var m=ix.list.filter(function(c){return nk(c.design)===nk(n)&&(!cl||nk(c.color)===nk(cl))&&(!sz||nk(c.size)===nk(sz))});
+  if(!m.length){m=ix.list.filter(function(c){return nk(c.base)===nk(n)&&(!sz||nk(c.size)===nk(sz))})}
+  if(!m.length||(!sz&&!cl)||(cl&&!sz&&m.length>1)||(sz&&!cl&&m.length>1&&new Set(m.map(function(c){return nk(c.color)})).size>1))return null;
+  m.sort(function(a,b){return b.avail-a.avail});return m[0];
+}
+/* design (+ optional color/size) without an exact match: all matching stock lines, to be deducted one after another */
+function stockSpread(ix,n,sz,cl){
+  if(!nk(n))return [];
+  return ix.list.filter(function(c){return c.avail>0&&(nk(c.design)===nk(n)||nk(c.base)===nk(n))&&(!cl||nk(c.color)===nk(cl))&&(!sz||nk(c.size)===nk(sz))});
+}
+function stockFind0(ix,n,sz,cl,sy){
   var k=nk(n),U='\u0001';if(!k)return null;sy=nk(sy);
   if(cl){
     var d=ix.byk[[n,cl,sz||'',sy].map(nk).join(U)];if(d)return d;
@@ -1086,7 +1113,7 @@ function stockDL(){
   if(!e){e=document.createElement('div');e.id='dls_stock';e.hidden=true;document.body.appendChild(e)}
   var ix=stockIx(),o=[],sizes=[],colors=[],dsg={},lb=function(a){return bn2('স্টক ','Stock ')+a+bn2(' পিস',' pcs')};
   ix.list.forEach(function(c){
-    if(c.avail>0&&c.full)o.push([c.full,c.avail]);
+    if(c.avail>0&&c.full){var ex=o.filter(function(a){return a[0]===c.full})[0];if(ex)ex[1]+=c.avail;else o.push([c.full,c.avail])}
     if(c.size&&sizes.indexOf(c.size)<0)sizes.push(c.size);
     if(c.color&&colors.indexOf(c.color)<0)colors.push(c.color);
     if(c.design){var dk=nk(c.design);dsg[dk]=dsg[dk]||{label:c.design,avail:0};dsg[dk].avail+=c.avail}
@@ -1118,6 +1145,8 @@ function skV(v,n,sy){
     h.textContent='📦 '+(ok?bn2('স্টকে আছে ','In stock: '):bn2('স্টকে মাত্র ','Only '))+c.avail+bn2(' পিস',' pcs')+(ok?'':bn2(' আছে',' in stock'));
   } else {
     var dn=ix.list.filter(function(z){return nk(z.design)===nk(n)&&z.avail>0});
+    var spd=stockSpread(ix,n,sz,cl);
+    if(spd.length){var tot=spd.reduce(function(a,z){return a+z.avail},0);h.className='skh mut '+(tot>=q?'good':'bad');h.textContent='📦 '+bn2('স্টকে মোট ','Total in stock: ')+tot+bn2(' পিস আছে — এই নামের স্টক থেকে নিজে কমে যাবে',' pcs — will be deducted automatically');return}
     if(dn.length&&(!cl||!sz||(!sy&&dn.some(function(z){return z.sy})))){
       var need=[];if(!sy&&dn.some(function(z){return z.sy}))need.push(bn2('হাতা/চেইন','sleeve/chain'));if(!cl&&dn.some(function(z){return z.color}))need.push(bn2('কালার','color'));
       if(!sz&&dn.some(function(z){return z.size}))need.push(bn2('সাইজ','size'));
@@ -1149,9 +1178,25 @@ function syncSaleStock(rec){
   var ix=stockIx(rec.id),prev=D.stock.filter(function(x){return x.sid===rec.id}),keep={};
   D.stock=D.stock.filter(function(x){return x.sid!==rec.id});
   (rec.items||[]).forEach(function(it,i){
-    var c=stockFind(ix,it.n,it.sz,it.cl,syK(it.sl,it.zp));if(!c)return;
-    var e={id:'sa'+rec.id+'_'+i,d:rec.d,type:'out',design:c.design,color:c.color,size:c.size,sl:c.sl||'',zp:c.zp?1:0,q:it.q,note:bn2('বিক্রি: ','Sale: ')+(rec.name||''),sid:rec.id};
-    D.stock.push(e);keep[e.id]=1;stockSend(e,false);
+    var c=stockFind(ix,it.n,it.sz,it.cl,syK(it.sl,it.zp));
+    if(!c){
+      var sp=stockSpread(ix,it.n,it.sz,it.cl),left=+it.q||0;
+      sp.forEach(function(z,j){
+        if(left<=0)return;var take=Math.min(left,z.avail);if(take<=0)return;
+        var e2={id:'sa'+rec.id+'_'+i+'_'+j,d:rec.d,type:'out',design:z.design,color:z.color,size:z.size,sl:z.sl||'',zp:z.zp?1:0,q:take,note:bn2('বিক্রি: ','Sale: ')+(rec.name||''),sid:rec.id};
+        z.avail-=take;left-=take;D.stock.push(e2);keep[e2.id]=1;stockSend(e2,false);
+      });
+      return;
+    }
+    var want=+it.q||0,first=Math.max(0,Math.min(want,c.avail)),rest=want-first;
+    if(rest>0&&first<=0&&c.avail<=0){first=want;rest=0}
+    var e={id:'sa'+rec.id+'_'+i,d:rec.d,type:'out',design:c.design,color:c.color,size:c.size,sl:c.sl||'',zp:c.zp?1:0,q:rest>0?first:it.q,note:bn2('বিক্রি: ','Sale: ')+(rec.name||''),sid:rec.id};
+    c.avail-=e.q;D.stock.push(e);keep[e.id]=1;stockSend(e,false);
+    if(rest>0){stockSpread(ix,it.n,it.sz,it.cl).forEach(function(z,j){
+      if(rest<=0||z===c)return;var take=Math.min(rest,z.avail);if(take<=0)return;
+      var e3={id:'sa'+rec.id+'_'+i+'_x'+j,d:rec.d,type:'out',design:z.design,color:z.color,size:z.size,sl:z.sl||'',zp:z.zp?1:0,q:take,note:bn2('বিক্রি: ','Sale: ')+(rec.name||''),sid:rec.id};
+      z.avail-=take;rest-=take;D.stock.push(e3);keep[e3.id]=1;stockSend(e3,false)});
+      if(rest>0){e.q+=rest;stockSend(e,false)}}
   });
   sheetDel('stock',prev.filter(function(e){return !keep[e.id]}).map(function(e){return e.id}));
 }
@@ -1239,6 +1284,7 @@ function payBox(title,sub,max,cb){
     +'<h3 style="margin:0 0 6px;font-size:18px">'+esc(title)+'</h3>'
     +'<div class="mut" style="font-size:13px;line-height:1.5">'+sub+'</div>'
     +'<input type="number" id="pay_a" inputmode="decimal" min="0" placeholder="'+bn2('কত টাকা দিলেন?','Amount paid')+'" style="margin-top:12px;width:100%;box-sizing:border-box">'
+    +'<label style="display:block;margin-top:10px;font-size:13px">'+bn2('তারিখ','Date')+'</label><input type="date" id="pay_d" value="'+today()+'" style="width:100%;box-sizing:border-box">'
     +'<div id="pay_e" class="bad mut" style="min-height:18px;margin-top:6px"></div>'
     +'<button class="sm" id="pay_full" style="width:100%;margin-top:2px">'+bn2('পুরোটা','Full amount')+' ('+fm(max)+')</button>'
     +'<div style="display:flex;gap:10px;margin-top:14px"><button class="p" id="pay_ok" style="flex:1;padding:12px;border-radius:14px;font-weight:700">'+bn2('সংরক্ষণ','Save')+'</button>'
@@ -1250,7 +1296,7 @@ function payBox(title,sub,max,cb){
     var a=parseFloat(inp.value);
     if(!(a>0)){document.getElementById('pay_e').textContent=bn2('টাকার পরিমাণ লিখুন','Enter an amount');return}
     if(a>max+0.001){document.getElementById('pay_e').textContent=bn2('বাকির চেয়ে বেশি দেওয়া যাবে না (সর্বোচ্চ ','Cannot exceed the due (max ')+fm(max)+')';return}
-    w.remove();cb(Math.min(a,max));
+    var pd=(document.getElementById('pay_d')||{}).value||today();w.remove();cb(Math.min(a,max),pd);
   }
   document.getElementById('pay_ok').onclick=ok;
   document.getElementById('pay_no').onclick=close;
@@ -1262,8 +1308,8 @@ function payS(id){
   if(busy)return;
   var x=D.sales.filter(function(z){return z.id===id})[0];if(!x)return;
   var due=stot(x)-(x.paid||0);if(due<=0)return;
-  payBox(bn2('টাকা জমা — ','Payment — ')+(x.name||''),bn2('মোট ','Total ')+fm(stot(x))+' · '+bn2('জমা ','Paid ')+fm(x.paid||0)+' · <b>'+bn2('বাকি ','Due ')+fm(due)+'</b>',due,function(a){
-    x.paid=Math.min(stot(x),(x.paid||0)+a);(x.pays=x.pays||[]).push({d:today(),a:a});
+  payBox(bn2('টাকা জমা — ','Payment — ')+(x.name||''),bn2('মোট ','Total ')+fm(stot(x))+' · '+bn2('জমা ','Paid ')+fm(x.paid||0)+' · <b>'+bn2('বাকি ','Due ')+fm(due)+'</b>',due,function(a,pd){
+    x.paid=Math.min(stot(x),(x.paid||0)+a);(x.pays=x.pays||[]).push({d:pd||today(),a:a});
     save();sfx('save');sheetSale(x);fx(render);
   });
 }
@@ -1272,8 +1318,8 @@ function payW(id,kd,j){
   var x=D.prod.filter(function(z){return z.id===id})[0];if(!x)return;
   var c=x[kd==='c'?'cuts':'sews'][j];if(!c)return;
   var a=c.q*c.r,rem=a-wPaid(c);if(rem<=0)return;
-  payBox(bn2('টাকা দিন — ','Pay — ')+(c.n||''),bn2('মোট মজুরি ','Total wage ')+fm(a)+' · '+bn2('দেওয়া হয়েছে ','Paid ')+fm(wPaid(c))+' · <b>'+bn2('বাকি ','Due ')+fm(rem)+'</b>',rem,function(v){
-    c.pd=Math.min(a,wPaid(c)+v);c.paid=c.pd>=a-0.001;(c.pays=c.pays||[]).push({d:today(),a:v});
+  payBox(bn2('টাকা দিন — ','Pay — ')+(c.n||''),bn2('মোট মজুরি ','Total wage ')+fm(a)+' · '+bn2('দেওয়া হয়েছে ','Paid ')+fm(wPaid(c))+' · <b>'+bn2('বাকি ','Due ')+fm(rem)+'</b>',rem,function(v,pd){
+    c.pd=Math.min(a,wPaid(c)+v);c.paid=c.pd>=a-0.001;(c.pays=c.pays||[]).push({d:pd||today(),a:v});
     save();sfx('save');fx(render);
   });
 }
@@ -1485,10 +1531,13 @@ function vrAdd(b){sfx('tap');var l=b.closest('.it').querySelector('.vls');l.inse
 function vrRm(b){sfx('del');var v=b.closest('.vr'),l=v.parentNode;if(l.querySelectorAll('.vr').length>1)l.removeChild(v);else{v.querySelectorAll('input').forEach(function(i){i.value=''});var h=v.querySelector('.skh');if(h)h.textContent=''}gT()}
 /* items saved flat (one per color/size line); g links lines of the same design */
 function itGroups(x){var out=[],last=null;itemsOf(x).forEach(function(i){var v={cl:i.cl,sz:i.sz,q:i.q};if(i.g&&last&&last.g===i.g&&last.n===i.n)last.v.push(v);else{last={g:i.g,n:i.n,r:i.r,sl:i.sl,zp:i.zp,v:[v]};out.push(last)}});return out}
-function itHtml(x){return itGroups(x).map(function(g){var sy=(g.sl||g.zp)?' ('+syL(g.sl,g.zp)+')':'';
-  if(g.v.length===1){var v=g.v[0];return '<div class="mut">'+esc(itLbl({n:g.n,cl:v.cl,sz:v.sz,sl:g.sl,zp:g.zp}))+' · '+nb(v.q)+' '+t('pcs')+' × '+fm(g.r)+'</div>'}
-  var tq=g.v.reduce(function(a,v){return a+v.q},0);
-  return '<div class="mut"><b>'+esc(g.n||'')+'</b>'+sy+' · '+nb(tq)+' '+t('pcs')+' × '+fm(g.r)+'</div>'+g.v.map(function(v){return '<div class="mut" style="padding-left:12px">• '+esc([v.cl,v.sz?'['+v.sz+']':''].filter(Boolean).join(' ')||'—')+' · '+nb(v.q)+' '+t('pcs')+'</div>'}).join('')}).join('')}
+function itHtml(x){
+  var all=itemsOf(x),tq=all.reduce(function(a,i){return a+(+i.q||0)},0),gs=itGroups(x);
+  var chips=gs.map(function(g){var sy=(g.sl||g.zp)?' ('+syL(g.sl,g.zp)+')':'';
+    if(g.v.length===1){var v=g.v[0];return '<span class="ichip">'+esc(itLbl({n:g.n,cl:v.cl,sz:v.sz,sl:g.sl,zp:g.zp}))+' · '+nb(v.q)+' '+t('pcs')+' × '+fm(g.r)+'</span>'}
+    var q=g.v.reduce(function(a,v){return a+v.q},0);
+    return '<span class="ichip ig"><b>'+esc(g.n||'')+'</b>'+sy+' × '+fm(g.r)+' · '+nb(q)+' '+t('pcs')+'<span class="iv">'+g.v.map(function(v){return '<i>'+esc([v.cl,v.sz?'['+v.sz+']':''].filter(Boolean).join(' ')||'—')+' · '+nb(v.q)+'</i>'}).join('')+'</span></span>'}).join('');
+  return '<div class="itot">'+bn2('মোট মাল: ','Total items: ')+'<b>'+nb(tq)+' '+t('pcs')+'</b></div><div class="ichips">'+chips+'</div>'}
 function gT(){
   var total=0;
   document.querySelectorAll('#itl .it').forEach(function(r){
@@ -1558,6 +1607,18 @@ function settle(id){
   save();
   fx(render);
 }
+var SLF={who:'',a:'',b:''};
+function slfSet(k,v){SLF[k]=v;sfx('tap');render()}
+function slfClr(){SLF={who:'',a:'',b:''};sfx('tap');render()}
+function slfOn(){return !!(SLF.who||SLF.a||SLF.b)}
+function slfApply(A){return A.filter(function(x){return (!SLF.who||x.name===SLF.who)&&(!SLF.a||x.d>=SLF.a)&&(!SLF.b||x.d<=SLF.b)})}
+function slfCard(){
+  var b=LANG==='bn',names=[];D.sales.forEach(function(x){if(x.name&&names.indexOf(x.name)<0)names.push(x.name)});names.sort();
+  var F=slfApply(D.sales),tv=sum(F,stot),pd=sum(F,function(x){return x.paid||0}),pc=sum(F,function(x){return itemsOf(x).reduce(function(a,i){return a+(+i.q||0)},0)});
+  var h='<div class="card"><h2>'+(b?'কাস্টমার ফিল্টার':'Customer filter')+'</h2><div class="f"><div><label>'+(b?'কাস্টমার':'Customer')+'</label><select onchange="slfSet(\'who\',this.value)"><option value="">'+(b?'সব কাস্টমার':'All customers')+'</option>'+names.map(function(n){return '<option value="'+esc(n)+'"'+(SLF.who===n?' selected':'')+'>'+esc(n)+'</option>'}).join('')+'</select></div><div><label>'+(b?'শুরুর তারিখ':'From')+'</label><input type="date" value="'+esc(SLF.a)+'" onchange="slfSet(\'a\',this.value)"></div><div><label>'+(b?'শেষ তারিখ':'To')+'</label><input type="date" value="'+esc(SLF.b)+'" onchange="slfSet(\'b\',this.value)"></div></div>';
+  if(slfOn())h+='<div class="g3" style="margin-top:10px"><div><div class="mut">'+(b?'মোট মাল':'Items')+'</div><div class="num">'+nb(pc)+' '+t('pcs')+'</div></div><div><div class="mut">'+(b?'মোট বিল':'Total')+'</div><div class="num">'+fm(tv)+'</div></div><div><div class="mut">'+(b?'জমা':'Paid')+'</div><div class="num good">'+fm(pd)+'</div></div><div><div class="mut">'+(b?'বাকি':'Due')+'</div><div class="num '+(tv-pd>0?'bad':'')+'">'+fm(tv-pd)+'</div></div></div><button class="sm" style="margin-top:10px" onclick="slfClr()">'+(b?'ফিল্টার মুছুন':'Clear filter')+'</button>';
+  return h+'</div>';
+}
 function sales(){
   stockDL();
   if(!(ed&&ed.k==='sales')&&PH_ED!==0){PH_NEW=[];PH_ED=0}
@@ -1570,7 +1631,8 @@ function sales(){
   
   h+='<div class="f"><div><label>'+t('date')+'</label><input type="date" id="s_d" value="'+today()+'"></div><div><label>'+t('cust_name')+'</label><input id="s_n"></div><div id="adv" style="display:'+(st==='custom'?'block':'none')+'"><label>'+t('adv_recv')+'</label><input type="number" id="s_a" inputmode="numeric"></div><div id="dn" style="display:'+(st==='custom'?'block':'none')+'"><label>'+t('design_note')+'</label><input id="s_o"></div></div><label style="display:block;margin-top:4px">'+t('items')+'</label>'+(D.stock&&D.stock.length?'<div class="mut" style="margin:2px 0 6px;font-size:12px">'+bn2('💡 স্টকে থাকা আইটেম লিস্ট থেকে বাছলে বিক্রির পর স্টক থেকে নিজে কমে যাবে।','💡 Pick an item from your stock list and it is deducted from stock automatically.')+'</div>':'')+'<div id="itl" oninput="gT();skH(event)">'+itRow('','','','',null)+'</div><button class="sm" onclick="addIt()">'+t('add_item')+'</button><div class="phb"><button class="sm xb" type="button" onclick="$(\'ph_f\').click()">'+ic('camera')+' '+bn2('ডিজাইনের ছবি যোগ করুন','Add design photo')+'</button><input type="file" id="ph_f" accept="image/*" multiple hidden onchange="phAdd(this)"></div><div class="phb" id="ph_t"></div><div class="mut" style="margin:10px 0 12px">'+t('order_total')+' <b id="gt">৳0</b></div><button class="btn" onclick="addSale()">'+t('save_sale')+'</button><span class="err" id="err"></span></div>';
   
-  var L=D.sales.slice().reverse();
+  h+=slfCard();
+  var L=slfApply(D.sales).slice().reverse();
   h+='<div class="card"><div class="hd"><h2 style="margin:0">'+t('sales_list')+'</h2><div class="vt"><button aria-label="List" class="'+(vm==='list'?'on':'')+'" onclick="setVm(\'list\')">'+ic('list')+'</button><button aria-label="Grid" class="'+(vm==='grid'?'on':'')+'" onclick="setVm(\'grid\')">'+ic('grid')+'</button></div></div><div>';
   if(!L.length) h+='<div class="empty">'+t('no_sales')+'</div>';
   h+=monthGroups('sales',L,function(x){return x.d},function(a){
@@ -1578,7 +1640,7 @@ function sales(){
     return fm(tv)+(dv>0?'<span class="mut bad">'+t('due_amt')+' '+fm(dv)+'</span>':'');
   },function(x){
     var due=stot(x)-x.paid;
-    return '<div class="row"><div>'+esc(x.name)+'<span class="tag">'+types[x.type]+'</span><div class="mut">'+x.d+(x.note?' · '+esc(x.note):'')+'</div>'+itHtml(x)+paysLine(x)+phLine(x)+'</div><div class="tr"><div style="text-align:right">'+fm(stot(x))+saAmt(x,due)+'</div>'+chkBtn(due<=0,'settle('+x.id+')')+'<button class="sm" onclick="edit(\'sales\','+x.id+')">'+t('edit')+'</button><button class="sm" onclick="del(\'sales\','+x.id+')">'+t('delete')+'</button></div></div>';
+    return '<div class="row srow"><div class="sl">'+esc(x.name)+'<span class="tag">'+types[x.type]+'</span><div class="mut">'+x.d+(x.note?' · '+esc(x.note):'')+'</div>'+itHtml(x)+paysLine(x)+phLine(x)+'</div><div class="tr"><div style="text-align:right">'+fm(stot(x))+saAmt(x,due)+'</div>'+chkBtn(due<=0,'settle('+x.id+')')+'<button class="sm" onclick="edit(\'sales\','+x.id+')">'+t('edit')+'</button><button class="sm" onclick="del(\'sales\','+x.id+')">'+t('delete')+'</button></div></div>';
   },vm==='grid'?'lg':'');
   return h+'</div></div>';
 }
@@ -1863,12 +1925,12 @@ function wage(){
 function lotTog(id,el){sfx('tap');var g=el.parentNode,o=!g.classList.contains('open');MO[id]=o;g.classList.toggle('open',o)}
 function lotBox(id,i,title,sm,body){var o=id in MO?MO[id]:i===0;return '<div class="mg'+(o?' open':'')+'"><div class="mg-h" onclick="lotTog(\''+id+'\',this)"><div class="mg-t">'+title+'</div><div class="mg-s"><span>'+sm+'</span><span class="mg-c">'+ic('chev')+'</span></div></div><div class="mg-b">'+body+'</div></div>'}
 
-var RP={m:'week',o:0,by:'cust',who:''}, RPN=[];
+var RP={m:'week',o:0,by:'cust',who:'',a:'',b:''}, RPN=[];
 var WD_EN=['Su','Mo','Tu','We','Th','Fr','Sa'], WD_BN=['রবি','সোম','মঙ্গল','বুধ','বৃহ','শুক্র','শনি'];
 var MN_EN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 var MN_BN=['জানু','ফেব্রু','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টে','অক্টো','নভে','ডিসে'];
 
-function rpSet(k,v){sfx('tap'); RP[k]=v; if(k==='m')RP.o=0; if(k==='by')RP.who=''; render()}
+function rpSet(k,v){sfx('tap'); RP[k]=v; if(k==='m')RP.o=0; if((k==='a'||k==='b')&&RP.m!=='cr')RP.m='cr'; if(k==='by')RP.who=''; render()}
 function rpNav(d){sfx('tap'); RP.o=Math.max(0,RP.o+d); render()}
 function rpWho(i){sfx('tap'); RP.who=RPN[i]; render()}
 function sh(d){var mn=LANG==='bn'?MN_BN:MN_EN; return mn[d.getMonth()]+' '+d.getDate()}
@@ -1878,6 +1940,10 @@ function rng(){
   if(RP.m==='week'){
     b=new Date(tDate); b.setDate(b.getDate()-RP.o*7);
     a=new Date(b); a.setDate(a.getDate()-6);
+    L=sh(a)+' – '+sh(b);
+  } else if(RP.m==='cr'){
+    a=new Date((RP.a||ds(tDate))+'T12:00:00');b=new Date((RP.b||RP.a||ds(tDate))+'T12:00:00');
+    if(b<a){var tmp=a;a=b;b=tmp}
     L=sh(a)+' – '+sh(b);
   } else if(RP.m==='month'){
     a=new Date(tDate.getFullYear(),tDate.getMonth()-RP.o,1,12);
@@ -1938,7 +2004,7 @@ function rep(){
   var ttlMap={cust:t('rep_cust'), cut:t('rep_cut'), sew:t('rep_sew')};
   var ttl=ttlMap[RP.by]||t('reports_title'), fd0=sum(F,function(e){return e.due});
   
-  var h='<div class="card"><h2>'+t('reports_title')+'</h2>'+sgm([['week',t('rep_week')],['month',t('rep_month')],['year',t('rep_year')]],RP.m,'m')+'<div class="nv"><button class="sm" aria-label="'+t('prev')+'" onclick="rpNav(1)">'+ic('prev')+'</button><b>'+R.L+'</b><button class="sm nx" aria-label="'+t('next')+'" onclick="rpNav(-1)"'+(RP.o?'':' disabled')+'>'+ic('prev')+'</button></div>'+sgm([['cust',t('rep_cust')],['cut',t('rep_cut')],['sew',t('rep_sew')]],RP.by,'by')+'<select aria-label="Person" onchange="rpSet(\'who\',this.value)"><option value="">'+t('all_persons')+' '+ttl.toLowerCase()+'</option>'+names.map(function(nVal){return '<option value="'+esc(nVal)+'"'+(nVal===RP.who?' selected':'')+'>'+esc(nVal)+'</option>'}).join('')+'</select>';
+  var h='<div class="card"><h2>'+t('reports_title')+'</h2>'+sgm([['week',t('rep_week')],['month',t('rep_month')],['year',t('rep_year')],['cr',LANG==='bn'?'তারিখ বাছুন':'Custom']],RP.m,'m')+(RP.m==='cr'?'<div class="f" style="margin-bottom:10px"><div><label>'+(LANG==='bn'?'শুরু':'From')+'</label><input type="date" value="'+esc(RP.a)+'" onchange="rpSet(\'a\',this.value)"></div><div><label>'+(LANG==='bn'?'শেষ':'To')+'</label><input type="date" value="'+esc(RP.b)+'" onchange="rpSet(\'b\',this.value)"></div></div>':'<div class="nv"><button class="sm" aria-label="'+t('prev')+'" onclick="rpNav(1)">'+ic('prev')+'</button><b>'+R.L+'</b><button class="sm nx" aria-label="'+t('next')+'" onclick="rpNav(-1)"'+(RP.o?'':' disabled')+'>'+ic('prev')+'</button></div>')+sgm([['cust',t('rep_cust')],['cut',t('rep_cut')],['sew',t('rep_sew')]],RP.by,'by')+'<select aria-label="Person" onchange="rpSet(\'who\',this.value)"><option value="">'+t('all_persons')+' '+ttl.toLowerCase()+'</option>'+names.map(function(nVal){return '<option value="'+esc(nVal)+'"'+(nVal===RP.who?' selected':'')+'>'+esc(nVal)+'</option>'}).join('')+'</select>';
   
   h+='<div class="g3" style="margin-bottom:6px"><div><div class="mut">'+(cu?t('sales'):t('total_wages'))+'</div><div class="num">'+fm(sum(F,function(e){return e.amt}))+'</div></div><div><div class="mut">'+t('entries_cnt')+'</div><div class="num">'+F.length+'</div></div><div><div class="mut">'+t('pcs')+'</div><div class="num">'+nb(sum(F,function(e){return e.q}))+'</div></div><div><div class="mut">'+t('due')+'</div><div class="num '+(fd0>0?'bad':'')+'">'+fm(fd0)+'</div></div></div>'+chart(lab,V,ttl+' report')+'</div>';
   
@@ -1992,8 +2058,8 @@ function render(){
 /* ===== JPG export ===== */
 function szc(){return 'display:inline-block;font-weight:600;color:#fff;padding:4px 14px;border-radius:999px;background:rgba(255,255,255,.1);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 4px 14px rgba(0,0,0,.25)'}
 function exBar(){
-  var b=LANG==='bn'; if(!{home:1,sales:1,prod:1,wage:1,exp:1,stock:1}[tab]) return '';
-  return '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-bottom:10px">'+(tab==='sales'?'<button class="sm xb" onclick="expJpg(\'due\')">'+ic('camera')+' '+(b?'বাকির JPG':'Dues JPG')+'</button>':'')+'<button class="sm xb" onclick="expJpg()">'+ic('camera')+' '+(b?'JPG সেভ':'Save JPG')+'</button></div>';
+  var b=LANG==='bn'; if(!{home:1,sales:1,prod:1,wage:1,exp:1,stock:1,rep:1}[tab]) return '';
+  return '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-bottom:10px">'+(tab==='sales'?'<button class="sm xb" onclick="expJpg(\'due\')">'+ic('camera')+' '+(b?'বাকির JPG':'Dues JPG')+'</button>':'')+'<button class="sm xb" onclick="expJpg()">'+ic('camera')+' '+(tab==='sales'&&SLF.who?(b?'কাস্টমারের হিসাব JPG':'Customer statement JPG'):(b?'JPG সেভ':'Save JPG'))+'</button></div>';
 }
 function expJpg(m){sfx('tap');jpgOut(expData(m||tab))}
 function expData(k){
@@ -2004,7 +2070,23 @@ function expData(k){
     o.rows=[[L('মোট বিক্রি','Total sales'),fm(sa)],[L('আদায়','Received'),fm(rc)],[L('বাকি (বিক্রি)','Sales due'),fm(sa-rc),'#c62828'],[L('উৎপাদন খরচ','Production cost'),fm(pc)],[L('অন্যান্য খরচ','Other expenses'),fm(ex)],[L('মজুরি বকেয়া','Wages due'),fm(wd),'#c62828'],[L('মোট তৈরি','Total made'),nb(mk)+' '+t('pcs')],[L('স্টকে (হিসাব)','In stock'),nb(mk-sd)+' '+t('pcs')]];
     o.sum=[[pr>=0?L('মোট লাভ','Total profit'):L('মোট ক্ষতি','Total loss'),(pr<0?'−':'')+fm(Math.abs(pr))]];
   } else if(k==='sales'||k==='due'){
-    var due=k==='due', A=D.sales.filter(function(x){return !due||stot(x)-x.paid>0});
+    var due=k==='due', A=slfApply(D.sales).filter(function(x){return !due||stot(x)-x.paid>0});
+    if(!due&&SLF.who){
+      var S=A.slice().sort(function(p,q){return p.d<q.d?-1:p.d>q.d?1:(p.id-q.id)}),rows=[],tq=0,tb=0,tp=0;
+      S.forEach(function(x){
+        var first=true;
+        itemsOf(x).forEach(function(i){var am=(+i.q||0)*(+i.r||0);tq+=+i.q||0;rows.push([first?x.d:'',(itLbl(i)||x.note||'—')+' × '+fm(i.r),nb(i.q),fm(am)]);first=false});
+        tb+=stot(x);
+        var ps=(x.pays&&x.pays.length)?x.pays:((x.paid>0)?[{d:x.d,a:x.paid}]:[]);
+        ps.forEach(function(q){tp+=q.a;rows.push([q.d,L('জমা','Payment'),'','− '+fm(q.a),'#15803d'])});
+      });
+      o.name='stmt';o.title=SLF.who+L(' — হিসাব',' — Statement');
+      o.sub=(SLF.a||SLF.b)?(SLF.a||'…')+' → '+(SLF.b||'…'):'';
+      o.cols=[[L('তারিখ','Date'),.17,'l'],[L('বিবরণ','Item'),.45,'l'],[L('পিস','Pcs'),.11,'r'],[L('টাকা','Amount'),.27,'r']];
+      o.rows=rows;
+      o.sum=[[L('মোট মাল','Total items'),nb(tq)+' '+t('pcs')],[L('মোট বিল','Total bill'),fm(tb)],[L('মোট জমা','Total paid'),fm(tp)],[L('বাকি','Balance due'),fm(tb-tp)]];
+      return o;
+    }
     o.title=due?L('বাকির তালিকা','Dues list'):L('বিক্রির তালিকা','Sales list');
     A=due?A.slice().sort(function(p,q){return (p.name||'')<(q.name||'')?-1:1}):byD(A,function(x){return x.d});
     o.cols=due?[[L('নাম','Name'),.38,'l'],[L('তারিখ','Date'),.2,'l'],[L('মোট','Total'),.21,'r'],[L('বাকি','Due'),.21,'r','#c62828']]:[[L('তারিখ','Date'),.17,'l'],[L('নাম','Name'),.3,'l'],[L('মোট','Total'),.18,'r'],[L('জমা','Paid'),.18,'r','#15803d'],[L('বাকি','Due'),.17,'r','#c62828']];
@@ -2020,6 +2102,13 @@ function expData(k){
     o.title=L('মজুরি খাতা','Wage ledger'); var wfd=wfDesc(); if(wfd){o.sub=wfd; if(WF.st==='due')o.title=L('মজুরি বকেয়া তালিকা','Wages due list')} o.cols=[[L('তারিখ','Date'),.17,'l'],[L('নাম','Name'),.27,'l'],[L('আইটেম','Item'),.24,'l'],[L('টাকা','Amount'),.16,'r'],[L('অবস্থা','Status'),.16,'r']];
     o.rows=R.map(function(r){return [r.d,r.name+' ('+r.role+')',r.item||'—',fm(r.amt),r.rem<=0?t('paid'):(r.pd>0?t('due')+' '+fm(r.rem):t('due')),0]});
     o.sum=[[L('মোট মজুরি','Total wages'),fm(tw)],[L('পরিশোধ','Paid'),fm(pw)],[L('বকেয়া','Due'),fm(tw-pw)]];
+  } else if(k==='rep'){
+    var RR=rng(),EE=ents(RP.by).filter(function(e){return e.d>=RR.a&&e.d<=RR.b&&(!RP.who||e.name===RP.who)}).sort(function(p,q){return p.d<q.d?-1:p.d>q.d?1:0});
+    var tt={cust:L('কাস্টমার রিপোর্ট','Customer report'),cut:L('কাটিং রিপোর্ট','Cutting report'),sew:L('সেলাই রিপোর্ট','Sewing report')}[RP.by];
+    o.name='rep';o.title=tt+(RP.who?' — '+RP.who:'');o.sub=RR.L;
+    o.cols=[[L('তারিখ','Date'),.16,'l'],[L('নাম','Name'),.22,'l'],[L('বিবরণ','Details'),.30,'l'],[L('পিস','Pcs'),.1,'r'],[L('টাকা','Amount'),.22,'r']];
+    o.rows=EE.map(function(e){return [e.d,e.name||'—',e.desc,nb(e.q),fm(e.amt)]});
+    o.sum=[[L('মোট পিস','Total pcs'),nb(sum(EE,function(e){return e.q}))],[L('মোট টাকা','Total amount'),fm(sum(EE,function(e){return e.amt}))],[L('বাকি','Due'),fm(sum(EE,function(e){return e.due}))]];
   } else if(k==='exp'){
     o.title=L('খরচের তালিকা','Expenses'); o.cols=[[L('তারিখ','Date'),.25,'l'],[L('খাত','Category'),.45,'l'],[L('টাকা','Amount'),.3,'r']];
     o.rows=byD(D.exp,function(x){return x.d}).map(function(x){return [x.d,x.cat,fm(x.amt)]}); o.sum=[[L('মোট খরচ','Total'),fm(sum(D.exp,function(x){return x.amt}))]];
@@ -2055,7 +2144,7 @@ function jpgOut(o){
         if(r[i]===undefined)return;
         if(k0(o)==='wage'&&i===4)col=v===t('paid')?'#15803d':'#c62828';
         if(r[2]&&r[r.length-1]&&typeof r[r.length-1]==='string'&&r.length>cl.length&&0)col=r[r.length-1];
-        if(typeof r[o.cols.length]==='string')col=(i===1&&o.name==='home')?col:col;
+        if(o.name==='stmt'&&typeof r[o.cols.length]==='string'&&i>=o.cols.length-1)col=r[o.cols.length];
         x.fillStyle=(o.name==='home'&&i===1&&typeof r[2]==='string')?r[2]:col;
         x.font=(cl[2]==='r'?'700 ':'400 ')+'21px '+ff;x.textAlign=cl[2]==='r'?'right':'left';
         x.fillText(fit(v,w),cl[2]==='r'?xs[i]+cl[1]*TW-12:xs[i],y+RH/2);
@@ -2136,6 +2225,7 @@ function list(){
 }
 function stSet(v){sfx('tap');SV=v;render()}
 var SE=null;
+function stResync(){if(!confirm(LANG==='bn'?'সব বিক্রি আবার স্টকের সাথে মিলিয়ে স্টক কাটা হবে। চালিয়ে যাবেন?':'Re-deduct stock for all sales?'))return;D.sales.forEach(function(x){syncSaleStock(x)});save();sfx('tap');render()}
 function stEdit(id){sfx('tap');SE=String(id);render();try{window.scrollTo({top:0,behavior:'smooth'})}catch(e){}}
 function stCancel(){sfx('tap');SE=null;render()}
 function stDel(id){sheetDel('stock',[id]);D.stock=D.stock.filter(function(x){return String(x.id)!==String(id)});if(SE===String(id))SE=null;save();sfx('del');render()}
@@ -2163,9 +2253,11 @@ function stock(){
   var S2=S.filter(function(x){return (!SF.design||x.design===SF.design)&&(!SF.color||x.color===SF.color)&&(!SF.size||x.size===SF.size)});
   var ti=sum(S2,function(x){return x.type==='in'?x.q:0}), to=sum(S2,function(x){return x.type==='out'?x.q:0});
   h+='<div class="g3">'+[[L('মোট জমা','Total in'),ti],[L('মোট বাদ','Total out'),to],[L('বর্তমান স্টক','In stock'),ti-to]].map(function(a){return '<div class="card"><div class="mut">'+a[0]+'</div><div class="num">'+nb(a[1])+' '+t('pcs')+'</div></div>'}).join('')+'</div>';
+  h+='<div class="mut" style="margin:-4px 0 12px"><button class="sm" onclick="stResync()">'+L('🔄 আগের বিক্রির সাথে স্টক মিলিয়ে নিন','🔄 Re-match stock with past sales')+'</button></div>';
   var g={}, so=lst('size').map(function(x){return x.n}), sgn=function(x){return x.type==='in'?x.q:-x.q};
   S2.forEach(function(x){var G=g[x.design||'—']=g[x.design||'—']||{t:0,s:{}}, Z=G.s[x.size||'—']=G.s[x.size||'—']||{t:0,c:{}}, c=(x.color||'—')+(syK(x.sl,x.zp)?' ('+syL(x.sl,x.zp)+')':'');G.t+=sgn(x);Z.t+=sgn(x);Z.c[c]=(Z.c[c]||0)+sgn(x)});
   var ord=function(a,c){var i=so.indexOf(a),j=so.indexOf(c);i=i<0?999:i;j=j<0?999:j;return i-j||(a<c?-1:a>c?1:0)};
+  Object.keys(g).forEach(function(k){var G=g[k];Object.keys(G.s).forEach(function(z){var Z=G.s[z];Object.keys(Z.c).forEach(function(c){if(!Z.c[c])delete Z.c[c]});if(!Object.keys(Z.c).length&&!Z.t)delete G.s[z]});if(!Object.keys(G.s).length)delete g[k]});
   var ks=Object.keys(g).sort();
   h+='<div class="card"><h2>'+L('ডিজাইন ও সাইজ অনুযায়ী স্টক','Stock by design & size')+'</h2>'+(ks.length?'':'<div class="empty">'+L('কোনো স্টক নেই','No stock')+'</div>')
    +ks.map(function(k){var G=g[k];return '<div class="mg open"><div class="mg-h" onclick="this.parentNode.classList.toggle(\'open\')"><div class="mg-t">'+esc(k)+'</div><div class="mg-s"><span class="'+(G.t>0?'good':'bad')+'">'+nb(G.t)+' '+t('pcs')+'</span><span class="mg-c">'+ic('chev')+'</span></div></div><div class="mg-b">'
